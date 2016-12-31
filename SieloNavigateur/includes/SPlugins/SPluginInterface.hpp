@@ -1,11 +1,12 @@
 #pragma once
 
-#include "includes/SStarter.hpp"
+#include "includes/SApplication.hpp"
 
 #include <QtPlugin>
 #include <QPixmap>
+#include <QObject>
 
-struct PluginProp {
+struct SPluginProp {
     QString name{};
     QString info{};
     QString desc{};
@@ -25,7 +26,7 @@ struct PluginProp {
     }
 };
 
-class PluginInterface {
+class SPluginInterface {
 public:
     enum InitState{ StartupInitState, LateInitState };
 
@@ -43,8 +44,19 @@ public:
         Q_UNUSED(event)
         return false;
     }
-
     virtual bool mousePress(const Sn::ObjectName &objName, QObject *obj, QMouseEvent *event) {
+        Q_UNUSED(objName)
+        Q_UNUSED(obj)
+        Q_UNUSED(event)
+        return false;
+    }
+    virtual bool mouseRelease(const Sn::ObjectName &objName, QObject *obj, QMouseEvent *event) {
+        Q_UNUSED(objName)
+        Q_UNUSED(obj)
+        Q_UNUSED(event)
+        return false;
+    }
+    virtual bool mouseMouve(const Sn::ObjectName &objName, QObject *obj, QMouseEvent *event) {
         Q_UNUSED(objName)
         Q_UNUSED(obj)
         Q_UNUSED(event)

@@ -19,6 +19,14 @@
 
 #define mApp SApplication::instance()
 
+namespace Sn {
+enum ObjectName {
+    ON_WebView,
+    ON_TabBar,
+    ON_BrowserWindow
+};
+}
+
 class SWebView;
 class SMainWindow;
 // This is a basic dialog to show text from the feldrise website at the start of Sielo
