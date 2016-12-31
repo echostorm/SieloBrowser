@@ -12,9 +12,9 @@
 #include <QProcess>
 #include <QMessageBox>
 
-#define SieloPortable 0
+#define SieloPortable 1
 
-QString SStarter::currentVersion = "0.4.0";
+QString SStarter::currentVersion = "0.4.1";
 SStarter::SStarter(QObject *parent) :
 	QObject(parent)
 {
@@ -24,7 +24,13 @@ SStarter::SStarter(QObject *parent) :
         args << "decompress" << ":/data/DData" << SMainWindow::dataPath;
         QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + "/SieloDataSoftware", args);
         SMainWindow::SSettings->setValue("builded", true);
-	}
+    }
+    else if(!SMainWindow::SSettings->value("0.4.0isMaJ", false).toBool()) {
+        QStringList args{};
+        args << "decompress" << ":/data/NData" << SMainWindow::dataPath;
+        QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + "/SieloDataSoftware", args);
+        SMainWindow::SSettings->setValue("0.4.0isMaJ", true);
+    }
 #endif
 	// Networks objects to download the last version
 	QNetworkAccessManager manager{};

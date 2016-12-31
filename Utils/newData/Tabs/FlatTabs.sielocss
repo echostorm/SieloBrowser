@@ -1,0 +1,25 @@
+STabWidget::page{
+  border-top: none; /* Nous supprimont le bords qu'il y a au dessus de la page
+}
+STabWidget::tab-bar{
+  left: 5px; /* Le première onglet est décalé de 5 pixel */
+}
+STabBar::tab{
+  background: #F0F0F0;
+  border: none;
+  min-width: 8px;
+  padding: 2px 5px 2px 13px; /* Il ne faut pas que le texte soit collé au bordures onglets */
+}
+STabBar::tab:selected, STabBar::tab:hover{
+  background: #FFFFFF;
+  border: 1px solid #BBBBBB;
+  border-bottom: none;
+}
+STabBar::tab:selected{
+  border: 1px solid #9B9B9B;
+  border-bottom: none;
+}
+STabBar::close-button {
+  image: url("imagespath/closeTab.png"); /* le bouton de fermeture */
+  subcontrol-position: right;
+}

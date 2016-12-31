@@ -1,0 +1,1 @@
+2 2 top 18 4 back next refresh home top 20 6 urlArea history bookmarksManager addBookmarks newWindow preferences 

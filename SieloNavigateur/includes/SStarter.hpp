@@ -18,6 +18,15 @@
 
 class SWebView;
 class SMainWindow;
+
+namespace Sn {
+enum ObjectName {
+    SWebView,
+    QTabBar,
+    SMainWindow
+};
+}
+
 // This is a basic dialog to show text from the feldrise website at the start of Sielo
 class TextToShow : public QDialog
 {
@@ -92,6 +101,6 @@ public:
 	static QString currentVersion;
 private:
 	QNetworkReply *m_reply{}; //< Reply to get the version of Sielo
-    QString m_version{ "0.4.0"};
+    QString m_version{ "0.4.1"};
 };
 

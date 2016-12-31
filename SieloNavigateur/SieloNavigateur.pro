@@ -35,7 +35,8 @@ HEADERS += \
     includes/SActions.hpp \
     includes/SWindows/SBookmarks.hpp \
     includes/SWindows/SPreferences.hpp \
-    includes/SStarter.hpp
+    includes/SStarter.hpp \
+    includes/SPlugins/PluginInterface.hpp
 
 RESOURCES += \
     ../Utils/ressources/data.qrc

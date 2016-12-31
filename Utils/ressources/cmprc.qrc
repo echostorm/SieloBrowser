@@ -4,5 +4,6 @@
     </qresource>
     <qresource prefix="/data">
         <file alias="DData">DefaultData.sndata</file>
+        <file alias="NData">NewData.sndata</file>
     </qresource>
 </RCC>

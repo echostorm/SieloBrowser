@@ -4,6 +4,8 @@
 #include <QtWebEngineWidgets>
 #include <QContextMenuEvent>
 
+#include <QtEvents>
+
 class STabWidget;
 
 class SWebView : public QWebEngineView
@@ -18,6 +20,14 @@ public:
 protected:
 	void contextMenuEvent(QContextMenuEvent *event); //< To add "Open in new tab" action and more in the futur
 	SWebView * createWindow(QWebEnginePage::WebWindowType type); //< Called when a new tab/window is requested
+
+    virtual void wheelEvent(QWheelEvent *event);
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
+    virtual void contextMenuEvent(QContextMenuEvent *event);
 
 public slots:
     void setFullScreen(QWebEngineFullScreenRequest request); //< Called whene full screen is requested (ex: YouTube videos)
