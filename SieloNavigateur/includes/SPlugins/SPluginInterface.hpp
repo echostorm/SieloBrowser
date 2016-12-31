@@ -69,7 +69,19 @@ public:
         Q_UNUSED(event)
         return false;
     }
-    //TODO: With other event
+
+    virtual bool keyPress(const Sn::ObjectName &objName, QObject *obj, QKeyEvent *event) {
+        Q_UNUSED(objName)
+        Q_UNUSED(obj)
+        Q_UNUSED(event)
+        return false;
+    }
+    virtual bool keyRelease(const Sn::ObjectName &objName, QObject *obj, QKeyEvent *event) {
+        Q_UNUSED(objName)
+        Q_UNUSED(obj)
+        Q_UNUSED(event)
+        return false;
+    }
 
 };
 
