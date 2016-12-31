@@ -63,6 +63,12 @@ public:
         return false;
     }
 
+    virtual bool wheelEvent(const Sn::ObjectName &objName, QObject *obj, QWheelEvent *event) {
+        Q_UNUSED(objName)
+        Q_UNUSED(obj)
+        Q_UNUSED(event)
+        return false;
+    }
     //TODO: With other event
 
 };
