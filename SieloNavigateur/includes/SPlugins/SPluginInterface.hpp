@@ -85,4 +85,9 @@ public:
 
 };
 
-Q_DECLARE_INTERFACE(PluginInterface, "Sielo.Navigateur.PluginInterface")
+QT_BEGIN_NAMESPACE
+
+#define PluginInterface_iid "com.feldrise.SieloNavigateur.PluginInterface"
+Q_DECLARE_INTERFACE(PluginInterface, PluginInterface_iid)
+
+QT_END_NAMESPACE
