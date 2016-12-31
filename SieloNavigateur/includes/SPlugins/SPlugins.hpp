@@ -8,6 +8,7 @@
 class QPluginLoader;
 
 class SPlugins : public QObject {
+    Q_OBJECT
 public:
     struct SPlugin {
         QString fileName{};
@@ -43,6 +44,9 @@ public slots:
 
 protected:
     QList<SPluginInterface*> m_loadedPlugins{};
+
+signals:
+    void pluginUnloaded(SPluginInterface *plugin);
 
 private:
     bool alreadyPropInAvailable(const SPluginProp &prop);

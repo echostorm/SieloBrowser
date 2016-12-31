@@ -41,6 +41,7 @@ void SPlugins::unloadPlugin(SPlugin *plugin) {
 
     plugin->instance->unload();
     plugin->pluginLoader->unload();
+    emit pluginUnloaded(plugin->instance);
 
     m_availablePlugins.removeOne(*plugin);
     plugin->instance = nullptr;
@@ -139,6 +140,8 @@ SPluginInterface *SPlugins::initPlugin(SPluginInterface::InitState state, SPlugi
     if (!pluginInterface->testPlugin()) {
         pluginInterface->unload();
         loader->unload();
+
+        emit pluginUnloaded(pluginInterface);
 
         return nullptr;
     }
