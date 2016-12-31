@@ -2,6 +2,7 @@
 #include "includes/SMainWindow.hpp"
 #include "includes/SWindows/SPreferences.hpp"
 #include "includes/SWidgets/SWebView.hpp"
+#include "includes/SPlugins/SPluginProxy.hpp"
 
 #include <QWebEngineView>
 #include <QNetworkRequest>
@@ -19,7 +20,9 @@ SApplication *SApplication::instance()
     return static_cast<SApplication*>(QCoreApplication::instance());
 }
 
-SApplication::SApplication(int &argc, char **argv) : QApplication(argc, argv)
+SApplication::SApplication(int &argc, char **argv) :
+    QApplication(argc, argv),
+    m_plugins(new SPluginProxy())
 {
 #if SieloPortable
     if(!SMainWindow::SSettings->value("builded", false).toBool()) {
@@ -89,11 +92,15 @@ SApplication::SApplication(int &argc, char **argv) : QApplication(argc, argv)
         else {
         }
     }
+
+    m_plugins->loadPlugins();
 }
 
 SApplication::~SApplication()
 {
+    m_plugins->shutdown();
 
+    delete m_plugins;
 }
 
 SMainWindow *SApplication::openSielo(SWebView *view)

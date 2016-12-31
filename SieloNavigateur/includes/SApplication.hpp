@@ -29,6 +29,8 @@ enum ObjectName {
 
 class SWebView;
 class SMainWindow;
+class SPluginProxy;
+
 // This is a basic dialog to show text from the feldrise website at the start of Sielo
 class TextToShow : public QDialog
 {
@@ -100,8 +102,12 @@ public:
 
     SMainWindow *openSielo(SWebView *view = nullptr);
 
+    SPluginProxy *plugins() { return m_plugins; }
+
     QString currentVersion{ "0.4.1" };
 private:
     QNetworkReply *m_reply{}; //< Reply to get the version of Sielo
     QString m_version{ "0.4.1"};
+
+    SPluginProxy *m_plugins{ nullptr };
 };

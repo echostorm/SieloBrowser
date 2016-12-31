@@ -74,5 +74,71 @@ bool SPluginProxy::processMouseDoubleClick(const Sn::ObjectName &type, QObject *
 
     return accepted;
 }
+bool SPluginProxy::processMousePress(const Sn::ObjectName &type, QObject *obj, QMouseEvent *event)
+{
+    bool accepted{ false };
 
-//TODO: Do the other events process
+    foreach (SPluginInterface *iPlugin, m_mousePressHandlers) {
+        if (iPlugin->mousePress(type, obj, event))
+            accepted = true;
+    }
+
+    return accepted;
+}
+bool SPluginProxy::processMouseRelease(const Sn::ObjectName &type, QObject *obj, QMouseEvent *event)
+{
+    bool accepted{ false };
+
+    foreach (SPluginInterface *iPlugin, m_mouseReleaseHandlers) {
+        if (iPlugin->mouseRelease(type, obj, event))
+            accepted = true;
+    }
+
+    return accepted;
+}
+bool SPluginProxy::processMouseMove(const Sn::ObjectName &type, QObject *obj, QMouseEvent *event)
+{
+    bool accepted{ false };
+
+    foreach (SPluginInterface *iPlugin, m_mouseMoveHandlers) {
+        if (iPlugin->mouseDoubleClick(type, obj, event))
+            accepted = true;
+    }
+
+    return accepted;
+}
+
+bool SPluginProxy::processKeyPress(const Sn::ObjectName &type, QObject *obj, QKeyEvent *event)
+{
+    bool accepted{ false };
+
+    foreach (SPluginInterface *iPlugin, m_keyPressHandlers) {
+        if (iPlugin->keyPress(type, obj, event))
+            accepted = true;
+    }
+
+    return accepted;
+}
+bool SPluginProxy::processKeyRelease(const Sn::ObjectName &type, QObject *obj, QKeyEvent *event)
+{
+    bool accepted{ false };
+
+    foreach (SPluginInterface *iPlugin, m_keyReleaseHandlers) {
+        if (iPlugin->keyRelease(type, obj, event))
+            accepted = true;
+    }
+
+    return accepted;
+}
+
+bool SPluginProxy::processWheelEvent(const Sn::ObjectName &type, QObject *obj, QWheelEvent *event)
+{
+    bool accepted{ false };
+
+    foreach (SPluginInterface *iPlugin, m_wheelEventHandlers) {
+        if (iPlugin->wheelEvent(type, obj, event))
+            accepted = true;
+    }
+
+    return accepted;
+}
