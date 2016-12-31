@@ -19,7 +19,8 @@ SOURCES += \
     src/SWindows/SDownload.cpp \
     src/SWindows/SBookmarks.cpp \
     src/SWindows/SPreferences.cpp \
-    src/SApplication.cpp
+    src/SApplication.cpp \
+    src/SPlugins/SPlugins.cpp
 
 HEADERS += \
     includes/SMainWindow.hpp \
@@ -36,7 +37,8 @@ HEADERS += \
     includes/SWindows/SBookmarks.hpp \
     includes/SWindows/SPreferences.hpp \
     includes/SApplication.hpp \
-    includes/SPlugins/SPluginInterface.hpp
+    includes/SPlugins/SPluginInterface.hpp \
+    includes/SPlugins/SPlugins.hpp
     includes/SApplication.hpp
 
 RESOURCES += \

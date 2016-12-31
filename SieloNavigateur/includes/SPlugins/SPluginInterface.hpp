@@ -33,7 +33,7 @@ public:
     virtual PluginProp pluginProp() = 0;
     virtual void init(InitState state, const QString& settingsPath) = 0;
     virtual void unload() = 0;
-    virtual void testPlugin() = 0;
+    virtual bool testPlugin() = 0;
 
     virtual ~PluginInterface() {}
     virtual void showSettings(QWidget *parent = nullptr) { Q_UNUSED(parent) }
