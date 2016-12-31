@@ -18,7 +18,6 @@ public:
 	// For set parent and override m_parent
 	void changeParent(QWidget *parent, STabWidget *parentTab);
 protected:
-	void contextMenuEvent(QContextMenuEvent *event); //< To add "Open in new tab" action and more in the futur
 	SWebView * createWindow(QWebEnginePage::WebWindowType type); //< Called when a new tab/window is requested
 
     virtual void wheelEvent(QWheelEvent *event);

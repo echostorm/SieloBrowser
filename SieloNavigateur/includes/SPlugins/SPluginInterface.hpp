@@ -15,9 +15,9 @@ struct SPluginProp {
     QPixmap icon{};
     bool hasSettings{ false };
 
-    PluginProp() {}
+    SPluginProp() {}
 
-    bool operator ==(const PluginProp& other) const {
+    bool operator ==(const SPluginProp& other) const {
         return (name == other.name &&
                 info == other.info &&
                 desc == other.desc &&
@@ -30,12 +30,12 @@ class SPluginInterface {
 public:
     enum InitState{ StartupInitState, LateInitState };
 
-    virtual PluginProp pluginProp() = 0;
+    virtual SPluginProp pluginProp() = 0;
     virtual void init(InitState state, const QString& settingsPath) = 0;
     virtual void unload() = 0;
     virtual bool testPlugin() = 0;
 
-    virtual ~PluginInterface() {}
+    virtual ~SPluginInterface() {}
     virtual void showSettings(QWidget *parent = nullptr) { Q_UNUSED(parent) }
 
     virtual bool mouseDoubleClick(const Sn::ObjectName &objName, QObject *obj, QMouseEvent *event) {
@@ -88,6 +88,6 @@ public:
 QT_BEGIN_NAMESPACE
 
 #define PluginInterface_iid "com.feldrise.SieloNavigateur.PluginInterface"
-Q_DECLARE_INTERFACE(PluginInterface, PluginInterface_iid)
+Q_DECLARE_INTERFACE(SPluginInterface, PluginInterface_iid)
 
 QT_END_NAMESPACE

@@ -25,7 +25,7 @@ public:
                     pluginProp == other.pluginProp &&
                     instance == other.instance);
         }
-    }
+    };
 
     explicit SPlugins(QObject *parent = nullptr);
 

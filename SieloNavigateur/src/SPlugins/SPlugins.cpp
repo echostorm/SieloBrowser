@@ -11,7 +11,7 @@ SPlugins::SPlugins(QObject *parent) :
     loadSettings();
 }
 
-QList<SPlugin> SPlugins::getAvailablePlugins() {
+QList<SPlugins::SPlugin> SPlugins::getAvailablePlugins() {
     loadAvailablePlugins();
 
     return m_availablePlugins;
@@ -22,7 +22,7 @@ bool SPlugins::loadPlugin(SPlugin *plugin) {
         return true;
 
     plugin->pluginLoader->setFileName(plugin->fullPath);
-    SPluginInterface *iPlugin{ static_cast<SPluginInterface*>(plugin->pluginLoader->instance()) };
+    SPluginInterface *iPlugin{ qobject_cast<SPluginInterface*>(plugin->pluginLoader->instance()) };
     if(!iPlugin)
         return false;
 
@@ -71,7 +71,7 @@ void SPlugins::loadPlugins()
 
     foreach (const QString &fullPath, m_allowedPlugins) {
         QPluginLoader *loader{ new QPluginLoader(fullPath) };
-        SPluginInterface *iPlugin{ static_cast<SPluginInterface*>(loader->instance()) };
+        SPluginInterface *iPlugin{ qobject_cast<SPluginInterface*>(loader->instance()) };
 
         if (!iPlugin) {
             qWarning() << "Loading " << fullPath << " plugin failed: " << loader->errorString();
@@ -108,7 +108,7 @@ void SPlugins::loadAvailablePlugins() {
         const QString absolutePath{ pluginsDir.absoluteFilePath(fileName) };
 
         QPluginLoader *loader{ new QPluginLoader(absolutePath) };
-        SPluginInterface *iPlugin{ static_cast<SPluginInterface*>(loader->instance()) };
+        SPluginInterface *iPlugin{ qobject_cast<SPluginInterface*>(loader->instance()) };
 
         if (!iPlugin) {
             qWarning() << "Available plugin loading error: " << loader->errorString();
