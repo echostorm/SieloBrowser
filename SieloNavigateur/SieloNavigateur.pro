@@ -35,7 +35,8 @@ HEADERS += \
     includes/SActions.hpp \
     includes/SWindows/SBookmarks.hpp \
     includes/SWindows/SPreferences.hpp \
-    includes/SPlugins/PluginInterface.hpp
+    includes/SPlugins/PluginInterface.hpp \
+    includes/SApplication.hpp
     includes/SApplication.hpp
 
 RESOURCES += \
