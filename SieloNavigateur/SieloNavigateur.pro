@@ -19,7 +19,7 @@ SOURCES += \
     src/SWindows/SDownload.cpp \
     src/SWindows/SBookmarks.cpp \
     src/SWindows/SPreferences.cpp \
-    src/SStarter.cpp
+    src/SApplication.cpp
 
 HEADERS += \
     includes/SMainWindow.hpp \
@@ -35,8 +35,8 @@ HEADERS += \
     includes/SActions.hpp \
     includes/SWindows/SBookmarks.hpp \
     includes/SWindows/SPreferences.hpp \
-    includes/SStarter.hpp \
     includes/SPlugins/PluginInterface.hpp
+    includes/SApplication.hpp
 
 RESOURCES += \
     ../Utils/ressources/data.qrc
