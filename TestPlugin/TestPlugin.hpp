@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QtPlugin>
 
-#include "includes/SPlugins/SPluginInterface.hpp"
+#include "../SieloNavigateur/includes/SPlugins/SPluginInterface.hpp"
 
 class TestPlugin : public QObject, public SPluginInterface
 {

@@ -47,4 +47,5 @@ private:
     QList<SPluginInterface*> m_keyReleaseHandlers;
 };
 
+#include "includes/SApplication.hpp"
 #define SN_REGISTER_EVENT_HANDLER(Type) mApp->plugins()->registerAppEventHandler(Type, this);

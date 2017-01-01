@@ -1,6 +1,8 @@
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SMainWindow.hpp"
+#include "includes/SApplication.hpp"
+#include "includes/SPlugins/SPluginProxy.hpp"
 
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -11,6 +13,10 @@ SWebView::SWebView(QWidget * parent, STabWidget *parentTab, QUrl url) :
 	m_parentTab(parentTab)
 {
 	connect(this->page(), &QWebEnginePage::fullScreenRequested, this, &SWebView::setFullScreen);
+
+    installEventFilter(this);
+    if (parentWidget())
+        parentWidget()->installEventFilter(this);
 
 	if (parentTab == nullptr)
 		connect(this->page(), &QWebEnginePage::windowCloseRequested, this, &SWebView::close);
@@ -30,6 +36,73 @@ void SWebView::changeParent(QWidget * parent, STabWidget *parentTab)
 	m_parentTab = parentTab;
 }
 
+bool SWebView::eventFilter(QObject *obj, QEvent *ev)
+{
+    if (obj == m_child && ev->type() == QEvent::MouseButtonPress) {
+        _mousePressEvent(static_cast<QMouseEvent*>(ev));
+    }
+
+    return QWebEngineView::eventFilter(obj, ev);
+}
+
+bool SWebView::event(QEvent *ev)
+{
+    if (ev->type() == QEvent::ChildAdded) {
+        QChildEvent *child_ev = static_cast<QChildEvent*>(ev);
+
+        QOpenGLWidget *w = qobject_cast<QOpenGLWidget*>(child_ev->child());
+        if (w) {
+            m_child = w;
+            w->installEventFilter(this);
+        }
+    }
+
+    return QWebEngineView::event(ev);
+}
+/*
+bool SWebView::eventFilter(QObject *watched, QEvent *event)
+{
+    qDebug() << "EVENT FILTER";
+    if (watched == this && event->type() == QEvent::ParentChange && parentWidget())
+        parentWidget()->installEventFilter(this);
+
+#define HANDLE_EVENT(f, t) { \
+        bool wasAccepted{ event->isAccepted() }; \
+        event->setAccepted(false); \
+        f(static_cast<t*>(event)); \
+        bool ret{ event->isAccepted() }; \
+        event->setAccepted(wasAccepted); \
+        return ret; \
+    }
+
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+        HANDLE_EVENT(_mousePressEvent, QMouseEvent);
+
+    case QEvent::MouseButtonRelease:
+        HANDLE_EVENT(_mouseReleaseEvent, QMouseEvent);
+
+    default:
+        break;
+    }
+
+    if (watched == this) {
+        switch(event->type()) {
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+            return true;
+
+        default:
+            break;
+        }
+    }
+
+    const bool res{ QWebEngineView::eventFilter(watched, event) };
+
+    return res;
+
+}
+*/
 void SWebView::contextMenuEvent(QContextMenuEvent *event)
 {
 	// Get the action of current context menu
@@ -42,6 +115,17 @@ void SWebView::contextMenuEvent(QContextMenuEvent *event)
 
 	// Execute the context menu
 	contextMenu->exec(event->globalPos());
+}
+
+void SWebView::_mousePressEvent(QMouseEvent *event)
+{
+    qDebug() << "Mouse Press event !";
+    if (mApp->plugins()->processMousePress(Sn::ON_WebView, this, event)) {
+        event->accept();
+        return;
+    }
+
+    event->accept();
 }
 
 SWebView * SWebView::createWindow(QWebEnginePage::WebWindowType type)

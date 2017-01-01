@@ -1,5 +1,7 @@
 #include "TestPlugin.hpp"
+
 #include "includes/SPlugins/SPluginProxy.hpp"
+#include "includes/SApplication.hpp"
 
 #include <QMessageBox>
 
@@ -27,7 +29,12 @@ void TestPlugin::init(InitState state, const QString &settingsPath)
 {
     Q_UNUSED(state);
 
-//    SN_REGISTER_EVENT_HANDLER(SPluginProxy::MousePressHandler);
+    if (!static_cast<SApplication*>(QCoreApplication::instance())->plugins())
+        QMessageBox::information(nullptr, "DEBUG", "That why it crash...");
+    else
+        QMessageBox::information(nullptr, "DEBUG", "The plugins existe");
+
+    static_cast<SApplication*>(QCoreApplication::instance())->plugins()->registerAppEventHandler(SPluginProxy::MousePressHandler, this);
 }
 
 void TestPlugin::unload() {}

@@ -2,6 +2,6 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
 	SieloDataSoftware \
-	SieloNavigateur \
-	SNThemeEditor \
-    TestPlugin
+    SieloNavigateur \
+    SNThemeEditor \
+    TestPlugin \
