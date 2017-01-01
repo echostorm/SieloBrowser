@@ -46,3 +46,5 @@ private:
     QList<SPluginInterface*> m_keyPressHandlers;
     QList<SPluginInterface*> m_keyReleaseHandlers;
 };
+
+#define SN_REGISTER_EVENT_HANDLER(Type) mApp->plugins()->registerAppEventHandler(Type, this);

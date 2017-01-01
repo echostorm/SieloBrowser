@@ -51,7 +51,9 @@ void SPlugins::unloadPlugin(SPlugin *plugin) {
 }
 
 void SPlugins::loadSettings() {
-    // Empty now
+    SMainWindow::SSettings->beginGroup("Plugin-Settings");
+    m_allowedPlugins = SMainWindow::SSettings->value("AllowedPlugins", QStringList()).toStringList();
+    SMainWindow::SSettings->endGroup();
 }
 
 void SPlugins::shutdown()
@@ -74,6 +76,7 @@ void SPlugins::loadPlugins()
         QPluginLoader *loader{ new QPluginLoader(fullPath) };
         SPluginInterface *iPlugin{ qobject_cast<SPluginInterface*>(loader->instance()) };
 
+        QMessageBox::information(nullptr, "DEBUG", "Load plugin from " + fullPath);
         if (!iPlugin) {
             qWarning() << "Loading " << fullPath << " plugin failed: " << loader->errorString();
             continue;
