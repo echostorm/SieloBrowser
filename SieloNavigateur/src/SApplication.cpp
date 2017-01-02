@@ -13,7 +13,6 @@
 #include <QProcess>
 #include <QMessageBox>
 
-#define SieloPortable 0
 
 SApplication *SApplication::instance()
 {
@@ -24,73 +23,49 @@ SApplication::SApplication(int &argc, char **argv) :
     QApplication(argc, argv),
     m_plugins(new SPluginProxy())
 {
-#if SieloPortable
-    if(!SMainWindow::SSettings->value("builded", false).toBool()) {
-        QStringList args{};
-        args << "decompress" << ":/data/DData" << SMainWindow::dataPath;
-        QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + "/SieloDataSoftware", args);
-        SMainWindow::SSettings->setValue("builded", true);
+    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
+    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, SMainWindow::SSettings->value("preferences/enablePlugins", true).toBool());
+    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::JavascriptEnabled, SMainWindow::SSettings->value("preferences/enableJavascript", true).toBool());
+
+    if (m_isPortable) {
+        if(!SMainWindow::SSettings->value("builded", false).toBool()) {
+            QStringList args{};
+            args << "decompress" << ":/data/DData" << SMainWindow::dataPath;
+            QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + "/SieloDataSoftware", args);
+            SMainWindow::SSettings->setValue("builded", true);
+        }
     }
-#endif
-    // Networks objects to download the last version
-    QNetworkAccessManager manager{};
-    m_reply = manager.get(QNetworkRequest(QUrl("http://feldrise.com/Sielo/version.txt")));
 
-    // Check if we want to open a file at the start of Sielo
-    if (QCoreApplication::arguments().count() > 1) {
-        QFileInfo fileInfo{ QCoreApplication::arguments()[1] };
-        SWebView *view{ new SWebView(nullptr) };
-        view->load(QUrl("File:///" + fileInfo.absoluteFilePath()));
-
-        SMainWindow *fen{ openSielo(view) };
-        fen->show();
-
-        return;
-    }
-    // Downloading the last version
-    QEventLoop loop{};
-    connect(m_reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    m_version = m_reply->readAll();
-    if(m_version != currentVersion) {
+    if(needMaJ()) {
 #ifndef Q_OS_WIN32
         QMessageBox::warning(nullptr, "Mise à joure", "Sielo Navigateur n'est pas à joure, nous vous \n"
                                                       "recommandont de passer à la version " + m_version);
 
-        SMainWindow *fen{ openSielo() };
-        fen->show();
 #else
         if (SMainWindow::SSettings->value("Maj/remind", true).toBool()) {
             // Show update dialog
             MaJDialog *majDialog{ new MaJDialog(nullptr) };
             majDialog->show();
-        }
-        else {
-            SMainWindow *fen{ openSielo() };
-            fen->show();
+            return;
         }
 #endif
-
     }
-    else {
-        SMainWindow *fen{ openSielo() };
+
+    // Check if we want to open a file at the start of Sielo
+    if (QCoreApplication::arguments().count() > 1) {
+        SMainWindow *fen{ createWindow(false, QUrl("File:///" + QFileInfo(arguments()[1]).absoluteFilePath())) };
         fen->show();
 
-        // Get if we need to show a text
-        m_reply = manager.get(QNetworkRequest(QUrl("http://feldrise.com/Sielo/showTxt.txt")));
-        QEventLoop loop2{};
-        connect(m_reply, &QNetworkReply::finished, &loop2, &QEventLoop::quit);
-        loop2.exec();
+        return;
+    }
 
-        QString showTxt{ m_reply->readAll() };
-        if(showTxt == "true\n") {
-            // Show the text
-            TextToShow *textToShow{ new TextToShow(fen) };
-            textToShow->show();
-        }
-        else {
-        }
+    SMainWindow *fen{ createWindow() };
+    fen->show();
+
+    if(needToShowTxt()) {
+        // Show the text
+        TextToShow *textToShow{ new TextToShow(fen) };
+        textToShow->show();
     }
 
     m_plugins->loadPlugins();
@@ -122,15 +97,34 @@ void SApplication::windowDestroyed(QObject *window)
     m_windows.removeOne(static_cast<SMainWindow*>(window));
 }
 
-SMainWindow *SApplication::openSielo(SWebView *view)
+bool SApplication::needMaJ()
 {
-        SMainWindow* fen{ new SMainWindow(nullptr, view) };
+    // Networks objects to download the last version
+    QNetworkAccessManager manager{};
+    m_reply = manager.get(QNetworkRequest(QUrl("http://feldrise.com/Sielo/version.txt")));
 
-        QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
-        QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, SMainWindow::SSettings->value("preferences/enablePlugins", true).toBool());
-        QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::JavascriptEnabled, SMainWindow::SSettings->value("preferences/enableJavascript", true).toBool());
+    // Downloading the last version
+    QEventLoop loop{};
+    connect(m_reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
 
-        return fen;
+    QString newVersion{ m_reply->readAll() };
+
+    return (newVersion == m_version);
+}
+
+bool SApplication::needToShowTxt()
+{
+    // Get if we need to show a text
+    QNetworkAccessManager manager{};
+    m_reply = manager.get(QNetworkRequest(QUrl("http://feldrise.com/Sielo/showTxt.txt")));
+    QEventLoop loop2{};
+    connect(m_reply, &QNetworkReply::finished, &loop2, &QEventLoop::quit);
+    loop2.exec();
+
+    QString showTxt{ m_reply->readAll() };
+
+    return (showTxt == "true\n");
 }
 
 TextToShow::TextToShow(QWidget *parent) :

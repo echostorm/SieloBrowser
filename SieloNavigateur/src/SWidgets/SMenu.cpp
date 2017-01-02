@@ -593,20 +593,7 @@ void SMenu::openAboutSielo()
 
 void SMenu::checkMaJ()
 {
-	// Networks items to download the last version
-	QNetworkAccessManager manager{};
-	QNetworkReply *reply{ manager.get(QNetworkRequest(QUrl("http://feldrise.com/Sielo/version.txt"))) };
-
-	// Loop during the download of the last verson
-	QEventLoop loop{};
-	connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-	loop.exec();
-
-	// New version
-    QString version{ "0.4.1" };
-	version = reply->readAll();
-
-    if (version != mApp->currentVersion) {
+    if (mApp->needMaJ()) {
 		MaJDialog *majDialog{ new MaJDialog(m_parent) };
 		majDialog->show();
 	}

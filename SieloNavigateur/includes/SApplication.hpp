@@ -102,24 +102,28 @@ public:
     int windowCount() const;
     QList<SMainWindow*> windows() const;
 
+    bool isPortable() const { return m_isPortable; }
+
     SMainWindow *getWindow() const;
     SMainWindow *createWindow(bool isPrivateWindow = false, const QUrl &startUrl = QUrl());
 
     SPluginProxy *plugins() { return m_plugins; }
+    const QString &version() const { return m_version; }
+
+    bool needMaJ();
+    bool needToShowTxt();
 
     static SApplication *instance();
-
-    SMainWindow *openSielo(SWebView *view = nullptr);
-    QString currentVersion{ "0.4.1" };
 
 private slots:
     void windowDestroyed(QObject *window);
 
 private:
     QNetworkReply *m_reply{}; //< Reply to get the version of Sielo
-    QString m_version{ "0.4.1"};
 
     SPluginProxy *m_plugins{ nullptr };
+    const QString m_version{ "0.4.1"};
+    bool m_isPortable{ false };
 
     QList<SMainWindow*> m_windows;
     QPointer<SMainWindow> m_lastActiveWindow;
