@@ -7,24 +7,25 @@
 #include <QLineEdit>
 #include <QSharedPointer>
 #include <QWebEngineDownloadItem>
+#include <QSplitter>
 
-#include "includes/SWidgets/STabWidget.hpp"
-#include "includes/SWidgets/SWebView.hpp"
-#include "includes/SWidgets/SToolBar.hpp"
-#include "includes/SWidgets/SMenu.hpp"
-#include "includes/SWidgets/SUrlArea.hpp"
-#include "includes/SWidgets/SSearchArea.hpp"
-
-#include "includes/SWindows/SDownload.hpp"
-#include "includes/SWindows/SHistory.hpp"
 
 struct SActions;
+class STabWidget;
+class SWebView;
+class SToolBar;
+class SMenu;
+class SUrlArea;
+class SSearchArea;
+class SDownloadItem;
+class SHistoryWindow;
+class SHistoryItem;
 
 class SMainWindow : public QMainWindow
 {
 public:
 	// Constructor and destructor
-	SMainWindow(QWidget* parent = nullptr, SWebView *view = nullptr, bool isPrivateBrowsing = false);
+    SMainWindow(SWebView *view = nullptr, bool isPrivateBrowsing = false);
 	~SMainWindow();
 
 	// Loading functions
@@ -51,12 +52,7 @@ public:
 	SWebView* currentPage();
 	QVector<SMenu*>& getMenus() { return m_menus; }
 
-	static SHistoryItem&  getLastHistoryItem() {
-		if (SMainWindow::curSessionHistory.size() > 0)
-			return SMainWindow::curSessionHistory[SMainWindow::curSessionHistory.size() - 1];
-		else
-			SHistoryItem();
-	}
+    static SHistoryItem&  getLastHistoryItem();
 	static void addHistoryItem(QString title, QUrl url);
 
 	static QSettings* SSettings;
@@ -99,14 +95,14 @@ private:
 	// Private attributs
 	
 	// Widgets of the window
-	SUrlArea* m_urlArea{ new SUrlArea(this) };
+    SUrlArea* m_urlArea{ nullptr };
 	SSearchArea* m_searchArea{ nullptr };
     QSplitter* m_splitter{ new QSplitter(this) };
-	STabWidget* m_tabs{ new STabWidget(this) };
+    STabWidget* m_tabs{ nullptr };
 	QVector<SToolBar*> m_toolsBars{};
 	QVector<SMenu*> m_menus{};
 
 	// Other
-	QSharedPointer<SActions> m_actions{};
+    QSharedPointer<SActions> m_actions{};
 };
 

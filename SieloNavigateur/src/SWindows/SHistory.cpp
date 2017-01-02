@@ -1,5 +1,9 @@
 #include "includes/SWindows/SHistory.hpp"
 #include "includes/SMainWindow.hpp"
+#include "includes/SWidgets/STabWidget.hpp"
+
+#include <QHeaderView>
+#include <QDate>
 
 SHistoryWindow::SHistoryWindow(SMainWindow * parent) :
 	QDialog(parent),

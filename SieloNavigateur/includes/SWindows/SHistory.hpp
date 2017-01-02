@@ -22,6 +22,7 @@ struct SHistoryItem {
 
 class SHistoryWindow : public QDialog
 {
+    Q_OBJECT
 public:
 	// Constructor and destructor
 	SHistoryWindow(SMainWindow* parent = nullptr);

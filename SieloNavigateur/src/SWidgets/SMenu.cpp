@@ -6,6 +6,10 @@
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
 #include "includes/SApplication.hpp"
+#include "includes/SWidgets/STabWidget.hpp"
+#include "includes/SWidgets/SSearchArea.hpp"
+#include "includes/SWidgets/SUrlArea.hpp"
+#include "includes/SWidgets/SWebView.hpp"
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -319,8 +323,7 @@ void SMenu::reset()
 
 void SMenu::createNewWindows()
 {
-    SWebView *view{ new SWebView(nullptr, nullptr, SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl()) };
-    SMainWindow* newWindows{ new SMainWindow(nullptr, view, false) };
+    SMainWindow *newWindows{ mApp->createWindow(false, SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl()) };
 	newWindows->show();
 }
 
@@ -418,7 +421,7 @@ void SMenu::showHistory()
 
 void SMenu::privateBrowsing()
 {
-	SMainWindow *privateBrowsingWindow{ new SMainWindow(nullptr, nullptr, true) };
+    SMainWindow *privateBrowsingWindow{ mApp->createWindow(true, SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl()) };
 	privateBrowsingWindow->show();
 }
 

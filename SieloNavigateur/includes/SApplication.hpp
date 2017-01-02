@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QApplication>
+#include <QPointer>
 #include <QWidget>
 #include <QDialog>
 #include <QVBoxLayout>
@@ -98,16 +99,28 @@ public:
     SApplication(int &argc, char** argv);
     ~SApplication();
 
-    static SApplication *instance();
+    int windowCount() const;
+    QList<SMainWindow*> windows() const;
 
-    SMainWindow *openSielo(SWebView *view = nullptr);
+    SMainWindow *getWindow() const;
+    SMainWindow *createWindow(bool isPrivateWindow = false, const QUrl &startUrl = QUrl());
 
     SPluginProxy *plugins() { return m_plugins; }
 
+    static SApplication *instance();
+
+    SMainWindow *openSielo(SWebView *view = nullptr);
     QString currentVersion{ "0.4.1" };
+
+private slots:
+    void windowDestroyed(QObject *window);
+
 private:
     QNetworkReply *m_reply{}; //< Reply to get the version of Sielo
     QString m_version{ "0.4.1"};
 
     SPluginProxy *m_plugins{ nullptr };
+
+    QList<SMainWindow*> m_windows;
+    QPointer<SMainWindow> m_lastActiveWindow;
 };

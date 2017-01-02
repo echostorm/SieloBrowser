@@ -2,6 +2,9 @@
 #include "includes/SMainWindow.hpp"
 
 #include <QFileInfo>
+#include <QUrl>
+#include <QMessageBox>
+#include <QDesktopServices>
 
 SDownloadItem::SDownloadItem(QWebEngineDownloadItem *download, SMainWindow *parent) :
 	QDialog(parent),

@@ -7,7 +7,7 @@ TEMPLATE = lib
 CONFIG += plugin
 TARGET = $$qtLibraryTarget(TestPlugin)
 
-LIBS += /home/feldrise/Documents/libSieloNavigateur.so.1
+LIBS += $$PWD/libSieloNavigateur.so.1.0.0
 
 HEADERS += \
     TestPlugin.hpp

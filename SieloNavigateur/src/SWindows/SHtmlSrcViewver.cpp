@@ -1,5 +1,7 @@
 #include "includes/SWindows/SHtmlSrcViewver.hpp"
 #include "includes/SMainWindow.hpp"
+#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWindows/SHistory.hpp"
 
 template<typename Arg, typename R, typename C>
 struct InvokeWrapper {

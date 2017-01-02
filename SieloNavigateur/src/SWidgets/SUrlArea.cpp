@@ -1,8 +1,12 @@
 #include "includes/SWidgets/SUrlArea.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
+#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWindows/SHistory.hpp"
 
 #include <QMessageBox>
+#include <QPushButton>
+#include <QUrl>
 
 SUrlArea::SUrlArea(SMainWindow * parent) :
 	QProgressBar(parent),

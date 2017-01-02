@@ -1,5 +1,14 @@
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
+#include "includes/SWidgets/STabWidget.hpp"
+#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/SToolBar.hpp"
+#include "includes/SWidgets/SMenu.hpp"
+#include "includes/SWidgets/SUrlArea.hpp"
+#include "includes/SWidgets/SSearchArea.hpp"
+
+#include "includes/SWindows/SDownload.hpp"
+#include "includes/SWindows/SHistory.hpp"
 
 #include <QMessageBox>
 #include <QFile>
@@ -15,10 +24,12 @@ QSettings * SMainWindow::SSettings = new QSettings(SMainWindow::dataPath + "snse
 QVector<SHistoryItem> SMainWindow::curSessionHistory = QVector<SHistoryItem>{};
 QVector<SDownloadItem*> SMainWindow::dlItems = QVector<SDownloadItem*>{};
 
-SMainWindow::SMainWindow(QWidget* parent, SWebView *view, bool isPrivateBrowsing) :
-	QMainWindow(parent),
-	privateBrowsing(isPrivateBrowsing),
-	m_actions(QSharedPointer<SActions>(new SActions))
+SMainWindow::SMainWindow(SWebView *view, bool isPrivateBrowsing) :
+    QMainWindow(nullptr),
+    privateBrowsing(isPrivateBrowsing),
+    m_actions(QSharedPointer<SActions>(new SActions)),
+    m_urlArea(new SUrlArea(this)),
+    m_tabs(new STabWidget(nullptr))
 {
 	// Set window attributes
 	setWindowIcon(QIcon(SMainWindow::dataPath + "Images/icon.ico"));
@@ -191,6 +202,13 @@ void SMainWindow::changeTabUrl(const QUrl& newUrl)
 	if (newUrl.toString() != tr("html/page_blanche"))
 		m_urlArea->setText(newUrl.toString());
 
+}
+
+SHistoryItem &SMainWindow::getLastHistoryItem() {
+        if (SMainWindow::curSessionHistory.size() > 0)
+            return SMainWindow::curSessionHistory[SMainWindow::curSessionHistory.size() - 1];
+        else
+            SHistoryItem();
 }
 
 void SMainWindow::addHistoryItem(QString title, QUrl url)

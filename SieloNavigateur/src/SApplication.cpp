@@ -103,6 +103,25 @@ SApplication::~SApplication()
     delete m_plugins;
 }
 
+SMainWindow *SApplication::createWindow(bool isPrivateWindow, const QUrl &startUrl)
+{
+    SWebView *view{ new SWebView(nullptr, nullptr, startUrl) };
+
+    SMainWindow *fen{ new SMainWindow(view, isPrivateWindow) };
+    connect(fen, &SMainWindow::destroyed, this, &SApplication::windowDestroyed);
+
+    m_windows.prepend(fen);
+    return fen;
+}
+
+void SApplication::windowDestroyed(QObject *window)
+{
+    Q_ASSERT(static_cast<SMainWindow*>(window));
+    Q_ASSERT(m_windows.contains(static_cast<SMainWindow*>(window)));
+
+    m_windows.removeOne(static_cast<SMainWindow*>(window));
+}
+
 SMainWindow *SApplication::openSielo(SWebView *view)
 {
         SMainWindow* fen{ new SMainWindow(nullptr, view) };

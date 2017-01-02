@@ -4,6 +4,7 @@
 
 #include <QDir>
 #include <QPluginLoader>
+#include <QMessageBox>
 
 SPlugins::SPlugins(QObject *parent) :
     QObject(parent)

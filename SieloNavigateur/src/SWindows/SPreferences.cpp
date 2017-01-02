@@ -1,8 +1,11 @@
 #include "includes/SWindows/SPreferences.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
+#include "includes/SWidgets/SWebView.hpp"
 
 #include <QWebEngineSettings>
 #include <QDir>
+#include <QMessageBox>
+#include <QMenuBar>
 
 GeneralPageWidget::GeneralPageWidget(QWidget *parent) :
 	QWidget(parent)

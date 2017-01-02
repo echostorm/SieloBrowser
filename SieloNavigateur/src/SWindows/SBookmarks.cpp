@@ -1,10 +1,16 @@
 #include "includes/SWindows/SBookmarks.hpp"
 #include "includes/SMainWindow.hpp"
+#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/SMenu.hpp"
+#include "includes/SWidgets/STabWidget.hpp"
 
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QStringListModel>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QUrl>
 
 SBookmarksView::SBookmarksView(QWidget *parent, bool isItemEditable) :
 	QTreeView(parent),

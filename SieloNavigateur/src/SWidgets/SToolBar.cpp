@@ -1,6 +1,10 @@
 #include "includes/SWidgets/SToolBar.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
+#include "includes/SWidgets/SUrlArea.hpp"
+#include "includes/SWidgets/SSearchArea.hpp"
+
+#include <QMessageBox>
 
 SToolBar::SToolBar(const QString& toolBarName, SMainWindow* parent) :
 	QToolBar(toolBarName),

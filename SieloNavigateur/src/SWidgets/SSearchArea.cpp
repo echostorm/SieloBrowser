@@ -1,5 +1,8 @@
 #include "includes/SWidgets/SSearchArea.hpp"
 #include "includes/SMainWindow.hpp"
+#include "includes/SWidgets/SWebView.hpp"
+
+#include <QUrl>
 
 SSearchArea::SSearchArea(const QIcon & icon, SMainWindow * parent) : 
 	QLineEdit(parent),
