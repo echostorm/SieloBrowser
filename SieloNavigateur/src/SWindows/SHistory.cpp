@@ -1,6 +1,7 @@
 #include "includes/SWindows/SHistory.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
+#include "includes/SApplication.hpp"
 
 #include <QHeaderView>
 #include <QDate>
@@ -56,26 +57,26 @@ SHistoryWindow::SHistoryWindow(SMainWindow * parent) :
 	QDate dateToShow{ QDate::currentDate().addDays(-7) };
 
 	for (date = QDate::currentDate(); date >= dateToShow; date = date.addDays(-1)) {
-		SMainWindow::SSettings->beginGroup("History/" + QString::number(date.year()) + "/" + QString::number(date.month()) + "/" + QString::number(date.day()));
+        mApp->settings()->beginGroup("History/" + QString::number(date.year()) + "/" + QString::number(date.month()) + "/" + QString::number(date.day()));
 
-		if(!SMainWindow::SSettings->contains("itemNum") || SMainWindow::SSettings->value("itemNum", 0).toInt() == 0) {
-			SMainWindow::SSettings->endGroup();
+        if(!mApp->settings()->contains("itemNum") || mApp->settings()->value("itemNum", 0).toInt() == 0) {
+            mApp->settings()->endGroup();
 			continue;
 		}
 
-		for (int i{ SMainWindow::SSettings->value("itemNum", 0).toInt() - 1 }; i >= 0; --i) {
-			if(!SMainWindow::SSettings->contains(QString::number(i) + "/title")) {
+        for (int i{ mApp->settings()->value("itemNum", 0).toInt() - 1 }; i >= 0; --i) {
+            if(!mApp->settings()->contains(QString::number(i) + "/title")) {
 				continue;
 			}
 
-			QString title{ SMainWindow::SSettings->value(QString::number(i) + "/title", "nullTitle").toString() };
-			QString url{ SMainWindow::SSettings->value(QString::number(i) + "/url", "nullUrl").toString() };
+            QString title{ mApp->settings()->value(QString::number(i) + "/title", "nullTitle").toString() };
+            QString url{ mApp->settings()->value(QString::number(i) + "/url", "nullUrl").toString() };
 
 			historyItemTitle.append(new QStandardItem(title));
 			historyItemUrl.append(new QStandardItem(url));
 
 		}
-		SMainWindow::SSettings->endGroup();
+        mApp->settings()->endGroup();
 
 		QStandardItem *dateItem{ new QStandardItem(QString::number(date.month()) + "/" + QString::number(date.day())) };
 
@@ -138,7 +139,7 @@ void SHistoryWindow::load()
 void SHistoryWindow::deleteAll()
 {
 	SMainWindow::curSessionHistory.clear();
-	SMainWindow::SSettings->remove("History");
+    mApp->settings()->remove("History");
 
 	m_model->clear();
 }
@@ -166,7 +167,7 @@ void SHistoryWindow::deleteOneFromParent()
 	else
 		dateForDeletation = QDate::fromString(m_model->data(m_view->currentIndex().parent()).toString(), "M/d");
 
-	SMainWindow::SSettings->remove("History/" + QString::number(QDate::currentDate().year()) + "/" + QString::number(dateForDeletation.month()) + "/" + QString::number(dateForDeletation.day()));
+    mApp->settings()->remove("History/" + QString::number(QDate::currentDate().year()) + "/" + QString::number(dateForDeletation.month()) + "/" + QString::number(dateForDeletation.day()));
 	m_model->removeRow(m_view->currentIndex().row(), m_view->currentIndex().parent());
 }
 
@@ -183,21 +184,21 @@ void SHistoryWindow::deleteOneFromItem()
 	else
 		dateForDeletation = QDate::fromString(m_model->data(m_view->currentIndex().parent()).toString(), "M/d");
 
-	SMainWindow::SSettings->beginGroup("History/" + QString::number(QDate::currentDate().year()) + "/" + QString::number(dateForDeletation.month()) + "/" + QString::number(dateForDeletation.day()));
+    mApp->settings()->beginGroup("History/" + QString::number(QDate::currentDate().year()) + "/" + QString::number(dateForDeletation.month()) + "/" + QString::number(dateForDeletation.day()));
 
-	int indexToDelete{ SMainWindow::SSettings->value("itemNum", 0).toInt() - 1 - m_view->currentIndex().row() };
+    int indexToDelete{ mApp->settings()->value("itemNum", 0).toInt() - 1 - m_view->currentIndex().row() };
 
-	SMainWindow::SSettings->remove(QString::number(indexToDelete));
-	for(int i{ indexToDelete }; i < SMainWindow::SSettings->value("itemNum").toInt() - 1; ++i) {
-		SMainWindow::SSettings->setValue(QString::number(i) + "/title", SMainWindow::SSettings->value(QString::number(i + 1) + "/title", "nullTitle").toString());
-		SMainWindow::SSettings->setValue(QString::number(i) + "/url", SMainWindow::SSettings->value(QString::number(i + 1) + "/url", "nullUrl").toUrl());
+    mApp->settings()->remove(QString::number(indexToDelete));
+    for(int i{ indexToDelete }; i < mApp->settings()->value("itemNum").toInt() - 1; ++i) {
+        mApp->settings()->setValue(QString::number(i) + "/title", mApp->settings()->value(QString::number(i + 1) + "/title", "nullTitle").toString());
+        mApp->settings()->setValue(QString::number(i) + "/url", mApp->settings()->value(QString::number(i + 1) + "/url", "nullUrl").toUrl());
 	}
 
-	SMainWindow::SSettings->setValue("itemNum", SMainWindow::SSettings->value("itemNum", 0).toInt() - 1);
-	SMainWindow::SSettings->remove(QString::number(SMainWindow::SSettings->value("itemNum", 0).toInt()) + "/title");
-	SMainWindow::SSettings->remove(QString::number(SMainWindow::SSettings->value("itemNum", 0).toInt()) + "/url");
+    mApp->settings()->setValue("itemNum", mApp->settings()->value("itemNum", 0).toInt() - 1);
+    mApp->settings()->remove(QString::number(mApp->settings()->value("itemNum", 0).toInt()) + "/title");
+    mApp->settings()->remove(QString::number(mApp->settings()->value("itemNum", 0).toInt()) + "/url");
 
-	SMainWindow::SSettings->endGroup();
+    mApp->settings()->endGroup();
 
 	m_model->removeRow(m_view->currentIndex().row(), m_view->currentIndex().parent());
 }

@@ -52,9 +52,9 @@ void SPlugins::unloadPlugin(SPlugin *plugin) {
 }
 
 void SPlugins::loadSettings() {
-    SMainWindow::SSettings->beginGroup("Plugin-Settings");
-    m_allowedPlugins = SMainWindow::SSettings->value("AllowedPlugins", QStringList()).toStringList();
-    SMainWindow::SSettings->endGroup();
+    mApp->settings()->beginGroup("Plugin-Settings");
+    m_allowedPlugins = mApp->settings()->value("AllowedPlugins", QStringList()).toStringList();
+    mApp->settings()->endGroup();
 }
 
 void SPlugins::shutdown()
@@ -68,7 +68,7 @@ void SPlugins::loadPlugins()
     if (!m_pluginsEnabled)
         return;
 
-    QDir settingsDir(SMainWindow::dataPath + "/plugins/");
+    QDir settingsDir(mApp->dataPath() + "/plugins/");
 
     if (!settingsDir.exists())
         settingsDir.mkdir(settingsDir.absolutePath());
@@ -108,7 +108,7 @@ void SPlugins::loadAvailablePlugins() {
 
     m_pluginsLoaded = true;
 
-    QDir pluginsDir{ QDir(SMainWindow::dataPath + "/plugins/") };
+    QDir pluginsDir{ QDir(mApp->dataPath() + "/plugins/") };
     foreach (const QString& fileName, pluginsDir.entryList(QDir::Files)) {
         const QString absolutePath{ pluginsDir.absoluteFilePath(fileName) };
 
@@ -139,7 +139,7 @@ SPluginInterface *SPlugins::initPlugin(SPluginInterface::InitState state, SPlugi
     if (!pluginInterface)
         return nullptr;
 
-    pluginInterface->init(state, SMainWindow::dataPath + "/plugins/");
+    pluginInterface->init(state, mApp->dataPath() + "/plugins/");
 
     if (!pluginInterface->testPlugin()) {
         pluginInterface->unload();

@@ -55,11 +55,8 @@ public:
     static SHistoryItem&  getLastHistoryItem();
 	static void addHistoryItem(QString title, QUrl url);
 
-	static QSettings* SSettings;
 	static QVector<SHistoryItem> curSessionHistory;
 	static QVector<SDownloadItem*> dlItems;
-
-	static QString dataPath;
 
 	bool privateBrowsing{ false };
 

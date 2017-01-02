@@ -1,6 +1,7 @@
 #include "includes/SWindows/SPreferences.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SWidgets/SWebView.hpp"
+#include "includes/SApplication.hpp"
 
 #include <QWebEngineSettings>
 #include <QDir>
@@ -19,23 +20,23 @@ GeneralPageWidget::GeneralPageWidget(QWidget *parent) :
 	loadingBarStyleList << "Fin" << "Flat";
 
 	// Set widgets attributes
-	m_homePageArea->setText(SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toString());
-	m_showMenuBar->setChecked(SMainWindow::SSettings->value("preferences/showMenuBar", false).toBool());
+    m_homePageArea->setText(mApp->settings()->value("preferences/homePage", "http://google.com").toString());
+    m_showMenuBar->setChecked(mApp->settings()->value("preferences/showMenuBar", false).toBool());
 	m_loadingBarStyleComboBox->addItems(loadingBarStyleList);
 
-	if(SMainWindow::SSettings->value("preferences/saveTabs", false).toBool())
+    if(mApp->settings()->value("preferences/saveTabs", false).toBool())
 		m_saveTabRButton->setChecked(true);
 	else
 		m_homePageRButton->setChecked(true);
 
-	if (SMainWindow::SSettings->value("preferences/loadingBarStyle", "fineBar").toString() == "fineBar")
+    if (mApp->settings()->value("preferences/loadingBarStyle", "fineBar").toString() == "fineBar")
 		m_loadingBarStyleComboBox->setCurrentText("Fin");
-	else if (SMainWindow::SSettings->value("preferences/loadingBarStyle", "fineBar").toString() == "flatBar")
+    else if (mApp->settings()->value("preferences/loadingBarStyle", "fineBar").toString() == "flatBar")
 		m_loadingBarStyleComboBox->setCurrentText("Flat");
 	else
 		m_loadingBarStyleComboBox->setCurrentText("Fin");
 
-	if (SMainWindow::SSettings->value("preferences/openWidgetInTab", true).toBool())
+    if (mApp->settings()->value("preferences/openWidgetInTab", true).toBool())
 		m_prefereOpenInNewTab->setChecked(true);
 	else
 		m_prefereOpenInNewWin->setChecked(true);
@@ -63,22 +64,22 @@ GeneralPageWidget::~GeneralPageWidget()
 void GeneralPageWidget::save()
 {
 	if(m_saveTabRButton->isChecked())
-		SMainWindow::SSettings->setValue("preferences/saveTabs", true);
+        mApp->settings()->setValue("preferences/saveTabs", true);
 	else
-		SMainWindow::SSettings->setValue("preferences/saveTabs", false);
+        mApp->settings()->setValue("preferences/saveTabs", false);
 
 	if (m_loadingBarStyleComboBox->currentText() == "Fin")
-		SMainWindow::SSettings->setValue("preferences/loadingBarStyle", "fineBar");
+        mApp->settings()->setValue("preferences/loadingBarStyle", "fineBar");
 	else if (m_loadingBarStyleComboBox->currentText() == "Flat")
-		SMainWindow::SSettings->setValue("preferences/loadingBarStyle", "flatBar");
+        mApp->settings()->setValue("preferences/loadingBarStyle", "flatBar");
 
 	if (m_prefereOpenInNewTab->isChecked())
-		SMainWindow::SSettings->setValue("preferences/openWidgetInTab", true);
+        mApp->settings()->setValue("preferences/openWidgetInTab", true);
 	else
-		SMainWindow::SSettings->setValue("preferences/openWidgetInTab", false);
+        mApp->settings()->setValue("preferences/openWidgetInTab", false);
 
-	SMainWindow::SSettings->setValue("preferences/showMenuBar", m_showMenuBar->isChecked());
-	SMainWindow::SSettings->setValue("preferences/homePage", m_homePageArea->text());
+    mApp->settings()->setValue("preferences/showMenuBar", m_showMenuBar->isChecked());
+    mApp->settings()->setValue("preferences/homePage", m_homePageArea->text());
 }
 
 BrowsPageWidget::BrowsPageWidget(SPreferencesWindow *parent) :
@@ -88,9 +89,9 @@ BrowsPageWidget::BrowsPageWidget(SPreferencesWindow *parent) :
 	m_layout->addWidget(m_webBox);
 	m_layout->addWidget(m_cookiesBox);
 
-	m_pluginCheckBox->setChecked(SMainWindow::SSettings->value("preferences/enablePlugins", true).toBool());
-	m_javascripCheckBox->setChecked(SMainWindow::SSettings->value("preferences/enableJavascript", true).toBool());
-	m_cookiesCheckBox->setChecked(SMainWindow::SSettings->value("preferences/enableCookies", true).toBool());
+    m_pluginCheckBox->setChecked(mApp->settings()->value("preferences/enablePlugins", true).toBool());
+    m_javascripCheckBox->setChecked(mApp->settings()->value("preferences/enableJavascript", true).toBool());
+    m_cookiesCheckBox->setChecked(mApp->settings()->value("preferences/enableCookies", true).toBool());
 
 	m_webBox->setTitle(tr("Options de navigation"));
 	m_cookiesBox->setTitle(tr("Options pour les cookies"));
@@ -110,9 +111,9 @@ BrowsPageWidget::~BrowsPageWidget()
 
 void BrowsPageWidget::save()
 {
-	SMainWindow::SSettings->setValue("preferences/enablePlugins", m_pluginCheckBox->isChecked());
-	SMainWindow::SSettings->setValue("preferences/enableJavascript", m_javascripCheckBox->isChecked());
-	SMainWindow::SSettings->setValue("preferences/enableCookies", m_cookiesCheckBox->isChecked());
+    mApp->settings()->setValue("preferences/enablePlugins", m_pluginCheckBox->isChecked());
+    mApp->settings()->setValue("preferences/enableJavascript", m_javascripCheckBox->isChecked());
+    mApp->settings()->setValue("preferences/enableCookies", m_cookiesCheckBox->isChecked());
 }
 
 void BrowsPageWidget::deleteAllCookies()

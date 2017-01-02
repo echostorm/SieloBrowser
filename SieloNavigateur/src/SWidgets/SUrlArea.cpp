@@ -3,6 +3,7 @@
 #include "includes/SActions.hpp"
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SWindows/SHistory.hpp"
+#include "includes/SApplication.hpp"
 
 #include <QMessageBox>
 #include <QPushButton>
@@ -41,17 +42,17 @@ void SUrlArea::loadStarted()
 {
 	// Change the refresh action to the stop action
 	if (m_parent->getActions()->refreshOrStop->text() != tr("Arrêter le chargement")) {
-		m_parent->getActions()->refreshOrStop->setIcon(QIcon(m_parent->getActions()->themePath + "stop.png"));
+        m_parent->getActions()->refreshOrStop->setIcon(QIcon(mApp->themePath() + "/stop.png"));
 		m_parent->getActions()->refreshOrStop->setText(tr("Arrêter le chargement"));
 		m_parent->getActions()->refreshOrStop->setShortcut(QKeySequence(""));
 		disconnect(m_parent->getActions()->refreshOrStop, &QAction::triggered, m_parent, &SMainWindow::refresh);
 		connect(m_parent->getActions()->refreshOrStop, &QAction::triggered, m_parent, &SMainWindow::stop);
 	}
 
-	if (SMainWindow::SSettings->value("preferences/loadingBarStyle", "fineBar").toString() == "fineBar") {
+    if (mApp->settings()->value("preferences/loadingBarStyle", "fineBar").toString() == "fineBar") {
 		setStyleSheet("QProgressBar{ border: none; background-color: #FFFFFF; } QProgressBar::chunk{background-color: #FFFFFF; border-bottom: 2px solid #000000;}");
 	}
-	else if (SMainWindow::SSettings->value("preferences/loadingBarStyle", "fineBar").toString() == "flatBar") {
+    else if (mApp->settings()->value("preferences/loadingBarStyle", "fineBar").toString() == "flatBar") {
 		setStyleSheet("QProgressBar{ border: none; background-color: #FFFFFF; } QProgressBar::chunk{background-color: #CECECE;}");
 	}
 	else {
@@ -83,7 +84,7 @@ void SUrlArea::loadFinished()
 	if (!view)
 		return;
 	if (this->value() == 100) {
-		m_parent->getActions()->refreshOrStop->setIcon(QIcon(m_parent->getActions()->themePath + "refresh.png"));
+        m_parent->getActions()->refreshOrStop->setIcon(QIcon(mApp->themePath() + "/refresh.png"));
 		m_parent->getActions()->refreshOrStop->setText(tr("Rafraîchir la page"));
 		m_parent->getActions()->refreshOrStop->setShortcuts(QKeySequence::Refresh);
 		disconnect(m_parent->getActions()->refreshOrStop, &QAction::triggered, m_parent, &SMainWindow::stop);

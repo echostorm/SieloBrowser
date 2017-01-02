@@ -16,7 +16,9 @@
 #include <QProgressBar>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSettings>
 #include <QCloseEvent>
+#include <QStandardPaths>
 
 #define mApp SApplication::instance()
 
@@ -108,8 +110,14 @@ public:
     SMainWindow *createWindow(bool isPrivateWindow = false, const QUrl &startUrl = QUrl());
     SMainWindow *createWindow(bool isPrivateWindow = false, SWebView *startView = nullptr);
 
-    SPluginProxy *plugins() { return m_plugins; }
+    void loadSettings();
+
     const QString &version() const { return m_version; }
+    const QString &dataPath() const { return m_dataPath; }
+    const QString &themePath() const { return m_themePath; }
+
+    SPluginProxy *plugins() { return m_plugins; }
+    QSettings *settings() { return m_settings; }
 
     bool needMaJ();
     bool needToShowTxt();
@@ -122,9 +130,15 @@ private slots:
 private:
     QNetworkReply *m_reply{}; //< Reply to get the version of Sielo
 
-    SPluginProxy *m_plugins{ nullptr };
     const QString m_version{ "0.4.1"};
+    const QString m_dataPath{ QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) };
     bool m_isPortable{ false };
+
+    QSettings *m_settings{ nullptr };
+    SPluginProxy *m_plugins{ nullptr };
+
+    int m_currentTheme{};
+    QString m_themePath{};
 
     QList<SMainWindow*> m_windows;
     QPointer<SMainWindow> m_lastActiveWindow;

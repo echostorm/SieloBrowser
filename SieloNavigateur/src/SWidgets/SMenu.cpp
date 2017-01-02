@@ -24,7 +24,7 @@ AboutSN::AboutSN(QWidget * parent) :
 
 	// The HTML text for the label
 	QString htmlTxt{ 
-        tr("<h2>Sielo <img src=\"") + SMainWindow::dataPath + tr("Images/icon.ico\" width=\"64\" height=\"64\"/> Navigateur (0.4.1)</h2>"
+        tr("<h2>Sielo <img src=\"") + mApp->dataPath() + tr("/Images/icon.ico\" width=\"64\" height=\"64\"/> Navigateur (0.4.1)</h2>"
 		"<p>"
 			"Qu'est-ce que c'est ? <br/>"
 			"Sielo est un navigateur web léger, performant, très personnalisable et<br/>"
@@ -52,7 +52,7 @@ AboutSN::AboutSN(QWidget * parent) :
 
 	// Set text and icons
 	m_txt->setText(htmlTxt);
-	m_SNIcon->setPixmap(QPixmap(SMainWindow::dataPath + "Images/icon.ico"));
+    m_SNIcon->setPixmap(QPixmap(mApp->dataPath() + "/Images/icon.ico"));
 
 	// Fill layouts
 	m_txtLayout->addWidget(m_SNIcon, 0, 0);
@@ -263,10 +263,10 @@ void SMenu::createThemeMenu()
     connect(m_actions->addTheme, &QAction::triggered, this, &SMenu::addTheme);
     connect(m_actions->openThemeEditor, &QAction::triggered, this, &SMenu::openThmEditor);
 
-    for(int i{ 0 }; i < SMainWindow::SSettings->value("preferences/themes/nbre", 1).toInt(); ++i) {
-        QAction *theme{ new QAction(SMainWindow::SSettings->value("preferences/themes/" + QString::number(i) + "/name").toString()) };
+    for(int i{ 0 }; i < mApp->settings()->value("preferences/themes/nbre", 1).toInt(); ++i) {
+        QAction *theme{ new QAction(mApp->settings()->value("preferences/themes/" + QString::number(i) + "/name").toString()) };
         theme->setData(i);
-        if(SMainWindow::SSettings->value("preferences/themes/" + QString::number(i) + "/current", false).toBool())
+        if(mApp->settings()->value("preferences/themes/" + QString::number(i) + "/current", false).toBool())
             theme->setEnabled(false);
         m_themesMenu->addAction(theme);
     }
@@ -298,11 +298,11 @@ void SMenu::createAboutMenu()
 {
 	// Set parents and icons for actions
 	m_actions->aboutQt->setParent(this);
-	m_actions->aboutQt->setIcon(QIcon(SMainWindow::dataPath + "/Images/QtIcon.png"));
+    m_actions->aboutQt->setIcon(QIcon(mApp->dataPath() + "/Images/QtIcon.png"));
 	m_actions->aboutSielo->setParent(this);
-	m_actions->aboutSielo->setIcon(QIcon(SMainWindow::dataPath + "/Images/icon.ico"));
+    m_actions->aboutSielo->setIcon(QIcon(mApp->dataPath() + "/Images/icon.ico"));
 	m_actions->checkMaJ->setParent(this);
-	m_actions->checkMaJ->setIcon(QIcon(SMainWindow::dataPath + "Images/icon2.png"));
+    m_actions->checkMaJ->setIcon(QPixmap(mApp->dataPath() + "/Images/icon2.png"));
 
 	// Connect actions to their respective slot
 	connect(m_actions->aboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
@@ -323,7 +323,7 @@ void SMenu::reset()
 
 void SMenu::createNewWindows()
 {
-    SMainWindow *newWindows{ mApp->createWindow(false, SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl()) };
+    SMainWindow *newWindows{ mApp->createWindow(false, mApp->settings()->value("preferences/homePage", "http://google.com").toUrl()) };
 	newWindows->show();
 }
 
@@ -356,12 +356,12 @@ void SMenu::showMenuBar()
 	if (!m_parent->menuBar()->isVisible()) {
 		m_parent->menuBar()->setVisible(true);
 		m_actions->showMenuBar->setText(tr("Afficher la barre de menu"));
-		SMainWindow::SSettings->setValue("preferences/showMenuBar", true);
+        mApp->settings()->setValue("preferences/showMenuBar", true);
 	}
 	else {
 		m_parent->menuBar()->setVisible(false);
 		m_actions->showMenuBar->setText(tr("Cacher la barre de menu"));
-		SMainWindow::SSettings->setValue("preferences/showMenuBar", false);
+        mApp->settings()->setValue("preferences/showMenuBar", false);
 	}
 }
 
@@ -411,7 +411,7 @@ void SMenu::showHistory()
 {
 	SHistoryWindow* historyWin{ new SHistoryWindow(m_parent) };
 	connect(historyWin, &SHistoryWindow::close, historyWin, &SHistoryWindow::deleteLater);
-	if (SMainWindow::SSettings->value("preferences/openWidgetInTab", true).toBool()) {
+    if (mApp->settings()->value("preferences/openWidgetInTab", true).toBool()) {
 		m_parent->createTab(historyWin, tr("Favoris"));
 		m_parent->getTabs()->setCurrentWidget(historyWin);
 	}
@@ -421,14 +421,14 @@ void SMenu::showHistory()
 
 void SMenu::privateBrowsing()
 {
-    SMainWindow *privateBrowsingWindow{ mApp->createWindow(true, SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl()) };
+    SMainWindow *privateBrowsingWindow{ mApp->createWindow(true, mApp->settings()->value("preferences/homePage", "http://google.com").toUrl()) };
 	privateBrowsingWindow->show();
 }
 
 void SMenu::showPageSrc()
 {
 	SHtmlSrcViewver* srcViewver{ new SHtmlSrcViewver(m_parent) };
-	if (SMainWindow::SSettings->value("preferences/openWidgetInTab", true).toBool()) {
+    if (mApp->settings()->value("preferences/openWidgetInTab", true).toBool()) {
 		m_parent->createTab(srcViewver, tr("Source de la page ").arg(m_parent->currentPage()->title()));
 		m_parent->getTabs()->setCurrentWidget(srcViewver);
 	}
@@ -439,7 +439,7 @@ void SMenu::showPageSrc()
 void SMenu::openBookmarksManager()
 {
 	SBookmarksDialog *bookmarksDialog{ new SBookmarksDialog(m_parent) };
-	if (SMainWindow::SSettings->value("preferences/openWidgetInTab", true).toBool()) {
+    if (mApp->settings()->value("preferences/openWidgetInTab", true).toBool()) {
 		m_parent->createTab(bookmarksDialog, tr("Favoris"));
 		m_parent->getTabs()->setCurrentWidget(bookmarksDialog);
 	}
@@ -489,14 +489,14 @@ void SMenu::createBookmarksItem(QStandardItem *item, SMenu *parent)
 
 void SMenu::changeTheme(QAction *theme)
 {
-    if(!SMainWindow::SSettings->value("preferences/themes/" + QString::number(theme->data().toInt()) + "/current", false).toBool()) {
+    if(!mApp->settings()->value("preferences/themes/" + QString::number(theme->data().toInt()) + "/current", false).toBool()) {
         // Save value for apply theme
-        SMainWindow::SSettings->beginGroup("preferences/themes/");
-        SMainWindow::SSettings->setValue(SMainWindow::SSettings->value("currentTheme", "0").toString() + "/current", false);
-        SMainWindow::SSettings->setValue(QString::number(theme->data().toInt()) + "/current", true);
-        SMainWindow::SSettings->setValue("currentTheme", theme->data().toInt());
-        SMainWindow::SSettings->setValue("changed", true);
-        SMainWindow::SSettings->endGroup();
+        mApp->settings()->beginGroup("preferences/themes/");
+        mApp->settings()->setValue(mApp->settings()->value("currentTheme", "0").toString() + "/current", false);
+        mApp->settings()->setValue(QString::number(theme->data().toInt()) + "/current", true);
+        mApp->settings()->setValue("currentTheme", theme->data().toInt());
+        mApp->settings()->setValue("changed", true);
+        mApp->settings()->endGroup();
 
         // Save windows state for restoration
         m_parent->saveTabs();
@@ -521,21 +521,21 @@ void SMenu::addTheme()
 
     // Info about the new theme
     QFileInfo themeInfo{ path };
-    int index{ SMainWindow::SSettings->value("preferences/themes/nbre", 1).toInt() };
+    int index{ mApp->settings()->value("preferences/themes/nbre", 1).toInt() };
 
     // Uncompress the new theme in the theme directory
     QStringList args{};
-    args << "decompress" << path << SMainWindow::dataPath + "Themes/" + themeInfo.baseName();
+    args << "decompress" << path << mApp->dataPath() + '/' + themeInfo.baseName();
     QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + "/SieloDataSoftware", args);
     QMessageBox::information(m_parent, tr("Info"), tr("Le thème ") + themeInfo.baseName() + tr(" va être ajouté (patientez quelques instants s'il vous plait)"));
 
 	// TODO: Create generic function to test if valu existe in setting
 	bool themeExiste{ false };
-	for (int i{ 0 }; i < SMainWindow::SSettings->value("preferences/themes/nbre", 1).toInt(); ++i) {
-		SMainWindow::SSettings->beginGroup("preferences/themes/" + QString::number(i));
-		if (SMainWindow::SSettings->value("name", "").toString() == themeInfo.baseName()) {
+    for (int i{ 0 }; i < mApp->settings()->value("preferences/themes/nbre", 1).toInt(); ++i) {
+        mApp->settings()->beginGroup("preferences/themes/" + QString::number(i));
+        if (mApp->settings()->value("name", "").toString() == themeInfo.baseName()) {
 			themeExiste = true;
-			SMainWindow::SSettings->endGroup();
+            mApp->settings()->endGroup();
 			// Save windows state for restoration
 			m_parent->saveTabs();
 			m_parent->saveWinState();
@@ -546,15 +546,15 @@ void SMenu::addTheme()
 			m_parent->close();
 			return;
 		}
-		SMainWindow::SSettings->endGroup();
+        mApp->settings()->endGroup();
 	}
 	if (!themeExiste) {
 		// Update setting
-		SMainWindow::SSettings->beginGroup("preferences/themes/");
-		SMainWindow::SSettings->setValue("nbre", index);
-		SMainWindow::SSettings->setValue(QString::number(index) + "/name/", themeInfo.baseName());
-		SMainWindow::SSettings->setValue("nbre", index + 1);
-		SMainWindow::SSettings->endGroup();
+        mApp->settings()->beginGroup("preferences/themes/");
+        mApp->settings()->setValue("nbre", index);
+        mApp->settings()->setValue(QString::number(index) + "/name/", themeInfo.baseName());
+        mApp->settings()->setValue("nbre", index + 1);
+        mApp->settings()->endGroup();
 	}
 
     // Add the new theme in the theme menu
@@ -572,7 +572,7 @@ void SMenu::openThmEditor()
 void SMenu::openPreferencesDialog()
 {
 	SPreferencesWindow *preferences{ new SPreferencesWindow(m_parent) };
-	if (SMainWindow::SSettings->value("preferences/openWidgetInTab", true).toBool()) {
+    if (mApp->settings()->value("preferences/openWidgetInTab", true).toBool()) {
 		m_parent->createTab(preferences, tr("Paramètres de Sielo"));
 		m_parent->getTabs()->setCurrentWidget(preferences);
 	}
@@ -583,7 +583,7 @@ void SMenu::openPreferencesDialog()
 void SMenu::openAboutSielo()
 {
 	AboutSN *aboutSN{ new AboutSN(m_parent) };
-	if (SMainWindow::SSettings->value("preferences/openWidgetInTab", true).toBool()) {
+    if (mApp->settings()->value("preferences/openWidgetInTab", true).toBool()) {
 		m_parent->createTab(aboutSN, tr("A propos de Sielo"));
 		m_parent->getTabs()->setCurrentWidget(aboutSN);
 	}

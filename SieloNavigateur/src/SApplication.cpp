@@ -21,18 +21,23 @@ SApplication *SApplication::instance()
 
 SApplication::SApplication(int &argc, char **argv) :
     QApplication(argc, argv),
+    m_settings(new QSettings(m_dataPath + "/settings.ini", QSettings::IniFormat)),
     m_plugins(new SPluginProxy())
 {
+    loadSettings();
+
     QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
-    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, SMainWindow::SSettings->value("preferences/enablePlugins", true).toBool());
-    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::JavascriptEnabled, SMainWindow::SSettings->value("preferences/enableJavascript", true).toBool());
+    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, mApp->settings()->value("preferences/enablePlugins", true).toBool());
+    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::JavascriptEnabled, mApp->settings()->value("preferences/enableJavascript", true).toBool());
+
+    QMessageBox::information(nullptr, "DEBUG", m_dataPath);
 
     if (m_isPortable) {
-        if(!SMainWindow::SSettings->value("builded", false).toBool()) {
+        if(!mApp->settings()->value("builded", false).toBool()) {
             QStringList args{};
-            args << "decompress" << ":/data/DData" << SMainWindow::dataPath;
+            args << "decompress" << ":/data/DData" << mApp->dataPath();
             QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + "/SieloDataSoftware", args);
-            SMainWindow::SSettings->setValue("builded", true);
+            mApp->settings()->setValue("builded", true);
         }
     }
 
@@ -42,7 +47,7 @@ SApplication::SApplication(int &argc, char **argv) :
                                                       "recommandont de passer à la version " + m_version);
 
 #else
-        if (SMainWindow::SSettings->value("Maj/remind", true).toBool()) {
+        if (mApp->settings()->value("Maj/remind", true).toBool()) {
             // Show update dialog
             MaJDialog *majDialog{ new MaJDialog(nullptr) };
             majDialog->show();
@@ -95,7 +100,13 @@ SMainWindow *SApplication::createWindow(bool isPrivateWindow, SWebView *startVie
     connect(fen, &SMainWindow::destroyed, this, &SApplication::windowDestroyed);
 
     m_windows.prepend(fen);
-    return fen;
+    return new SMainWindow();
+}
+
+void SApplication::loadSettings()
+{
+    m_currentTheme = m_settings->value("preferences/themes/currentTheme", 0).toInt();
+    m_themePath = m_dataPath + "/Themes/" + m_settings->value("preferences/themes/" + QString::number(m_currentTheme) + "/name", "SIcons").toString();
 }
 
 void SApplication::windowDestroyed(QObject *window)
@@ -183,7 +194,7 @@ MaJDialog::MaJDialog(QWidget * parent) :
     m_boxBtn->addButton(m_installButton, QDialogButtonBox::AcceptRole);
     m_boxBtn->addButton(QDialogButtonBox::Close);;
     m_remindMaj->setChecked(true);
-    m_icon->setPixmap(QPixmap(SMainWindow::dataPath + "Images/icon2.PNG"));
+    m_icon->setPixmap(QPixmap(mApp->dataPath() + "/Images/icon2.PNG"));
 
     // Get the text to show
     m_reply = m_netManager.get(QNetworkRequest(QUrl("http://feldrise.com/Sielo/updateTxt.html")));
@@ -247,7 +258,7 @@ void MaJDialog::save()
 
     updater.write(m_reply->readAll());
     updater.close();
-    SMainWindow::SSettings->setValue("Maj/remind", true);
+    mApp->settings()->setValue("Maj/remind", true);
 
     QDesktopServices::openUrl(QUrl(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/SNUpdater.exe"));
     if (parentWidget() != nullptr) {
@@ -266,15 +277,15 @@ void MaJDialog::closeEvent(QCloseEvent * event)
     }
     if (!m_updateSuccess) {
         if (!m_remindMaj->isChecked()) {
-            SMainWindow::SSettings->setValue("Maj/remind", false);
+            mApp->settings()->setValue("Maj/remind", false);
         }
 
         if (parent() == nullptr) {
             SMainWindow* fen{ new SMainWindow() };
 
             QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
-            QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, SMainWindow::SSettings->value("preferences/enablePlugins", true).toBool());
-            QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::JavascriptEnabled, SMainWindow::SSettings->value("preferences/enableJavascript", true).toBool());
+            QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, mApp->settings()->value("preferences/enablePlugins", true).toBool());
+            QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::JavascriptEnabled, mApp->settings()->value("preferences/enableJavascript", true).toBool());
 
             fen->show();
         }

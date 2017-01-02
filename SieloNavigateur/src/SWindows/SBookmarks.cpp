@@ -3,6 +3,7 @@
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SWidgets/SMenu.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
+#include "includes/SApplication.hpp"
 
 #include <QMessageBox>
 #include <QFileInfo>
@@ -16,7 +17,7 @@ SBookmarksView::SBookmarksView(QWidget *parent, bool isItemEditable) :
 	QTreeView(parent),
 	m_isItemEditable(isItemEditable)
 {
-	m_bookmarksFile.setFileName(SMainWindow::dataPath + "Bookmarks.xbel");
+    m_bookmarksFile.setFileName(mApp->dataPath() + "/Bookmarks.xbel");
 	QStringList labels{};
 	labels << tr("Title") << tr("Location");
 	setSelectionMode(QTreeView::ExtendedSelection);
@@ -136,7 +137,7 @@ void SBookmarksView::writeItem(QStandardItem *item)
 		m_stream.writeTextElement("title", item->text());
 		m_stream.writeEndElement();
 
-		QFile icon{ SMainWindow::dataPath + "Images/FavIcons/icon" + item->text() + ".png" };
+        QFile icon{ mApp->dataPath() + "/Images/FavIcons/icon" + item->text() + ".png" };
 		if (!icon.open(QIODevice::WriteOnly))
 			return;
 		item->icon().pixmap(64, 64).save(&icon, "PNG");
@@ -151,7 +152,7 @@ void SBookmarksView::readTitle(QStandardItem *item)
 {
 	item->setText(m_xml.readElementText());
 	if(item->data(Qt::UserRole).toString() == "bookmark")
-		item->setIcon(QIcon(SMainWindow::dataPath + "Images/FavIcons/icon" + item->text() + ".png"));
+        item->setIcon(QIcon(mApp->dataPath() + "/Images/FavIcons/icon" + item->text() + ".png"));
 }
 
 void SBookmarksView::readSeparator(QStandardItem *item)

@@ -2,6 +2,7 @@
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SWidgets/SUrlArea.hpp"
 #include "includes/SMainWindow.hpp"
+#include "includes/SApplication.hpp"
 
 STabWidget::STabWidget(SMainWindow * parent) :
 	QTabWidget(parent),
@@ -11,7 +12,7 @@ STabWidget::STabWidget(SMainWindow * parent) :
 	setTabsClosable(true);
 	setMovable(true);
 
-	QPushButton *plusButton{ new QPushButton(QIcon(SMainWindow::dataPath + "Images/plusTab.png"), "", this) };
+    QPushButton *plusButton{ new QPushButton(QIcon(mApp->dataPath() + "/Images/plusTab.png"), "", this) };
 	plusButton->setMaximumWidth(24);
 	plusButton->setFlat(true);
 	setCornerWidget(plusButton);
@@ -21,14 +22,14 @@ STabWidget::STabWidget(SMainWindow * parent) :
 	connect(this, &STabWidget::tabCloseRequested, this, &STabWidget::tabClosed);
 	connect(plusButton, &QPushButton::clicked, this, &STabWidget::createDefaultWebTab);
 
-	QFile style{ SMainWindow::dataPath + "Tabs/FlatTabs.sielocss" };
+    QFile style{ mApp->dataPath() + "/Tabs/FlatTabs.sielocss" };
 	QString css{};
 
 	if (style.open(QFile::ReadOnly)) {
 		css = style.readAll();
 
 		css.replace("S", "Q");
-		css.replace("imagespath", SMainWindow::dataPath + "Images");
+        css.replace("imagespath", mApp->dataPath() + "/Images");
 		css.replace("QTabWidget::page", "QTabWidget::pane");
 
 		style.close();
@@ -56,7 +57,7 @@ STabWidget::STabWidget(SMainWindow * parent) :
 			"	border-bottom: none;"
 			"}"
 			"QTabBar::close-button {"
-			"	image: url(" + SMainWindow::dataPath + "Images/closeTab.png);"
+            "	image: url(" + mApp->dataPath() + "/Images/closeTab.png);"
 			"	subcontrol-position: right;"
 			"}";
 	}
@@ -94,7 +95,7 @@ void STabWidget::createWebTab(QString title, SWebView * view)
 	tabPage->setAttribute(Qt::WA_DeleteOnClose);
 
 	// Enable are disable cookies
-	if (!SMainWindow::SSettings->value("preferences/enableCookies", true).toBool())
+    if (!mApp->settings()->value("preferences/enableCookies", true).toBool())
 		view->page()->profile()->cookieStore()->deleteAllCookies();
 	else if(m_parent->privateBrowsing)
 		view->page()->profile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
@@ -125,7 +126,7 @@ void STabWidget::createWebTab(QString title, QUrl url)
 	tabPage->setAttribute(Qt::WA_DeleteOnClose);
 
 	// Enable are disable cookies
-	if (!SMainWindow::SSettings->value("preferences/enableCookies", true).toBool())
+    if (!mApp->settings()->value("preferences/enableCookies", true).toBool())
 		view->page()->profile()->cookieStore()->deleteAllCookies();
 	else if(m_parent->privateBrowsing)
 		view->page()->profile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
@@ -133,7 +134,7 @@ void STabWidget::createWebTab(QString title, QUrl url)
 
 void STabWidget::createDefaultWebTab()
 {
-	createWebTab(tr("Home page"), SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl());
+    createWebTab(tr("Home page"), mApp->settings()->value("preferences/homePage", "http://google.com").toUrl());
     setCurrentIndex(count() - 1);
 }
 

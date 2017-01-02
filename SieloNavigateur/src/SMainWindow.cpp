@@ -1,5 +1,6 @@
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
+#include "includes/SApplication.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SWidgets/SToolBar.hpp"
@@ -19,8 +20,6 @@ const unsigned int THEME_V0 = 1;
 const unsigned int THEME_V1 = 2;
 const unsigned int THEME_V2 = 3;
 
-QString SMainWindow::dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/SieloNavigateurV3/";
-QSettings * SMainWindow::SSettings = new QSettings(SMainWindow::dataPath + "snsettings.ini", QSettings::IniFormat);
 QVector<SHistoryItem> SMainWindow::curSessionHistory = QVector<SHistoryItem>{};
 QVector<SDownloadItem*> SMainWindow::dlItems = QVector<SDownloadItem*>{};
 
@@ -32,18 +31,18 @@ SMainWindow::SMainWindow(SWebView *view, bool isPrivateBrowsing) :
     m_tabs(new STabWidget(nullptr))
 {
 	// Set window attributes
-	setWindowIcon(QIcon(SMainWindow::dataPath + "Images/icon.ico"));
+    setWindowIcon(QIcon(mApp->dataPath() + "/Images/icon.ico"));
 	setWindowTitle(tr("Sielo Navigateur"));
     setAttribute(Qt::WA_DeleteOnClose);
-    resize(SMainWindow::SSettings->value("windowSave/attributes/size", QSize(1024, 768)).toSize());
-    if (!QString::number(SMainWindow::SSettings->value("windowSave/attributes/pos", QPoint()).toInt()).isEmpty())
-        move(SMainWindow::SSettings->value("windowSave/attributes/pos").toPoint());
+    resize(mApp->settings()->value("windowSave/attributes/size", QSize(1024, 768)).toSize());
+    if (!QString::number(mApp->settings()->value("windowSave/attributes/pos", QPoint()).toInt()).isEmpty())
+        move(mApp->settings()->value("windowSave/attributes/pos").toPoint());
 
 	// Set widgets attributes
 	m_urlArea->setMinimumWidth(500);
 	m_urlArea->move(-50, -50);
 	
-	m_searchArea = new SSearchArea(QIcon(m_actions->themePath + "search-lineedit.png"), this);
+    m_searchArea = new SSearchArea(QIcon(mApp->themePath() + "/search-lineedit.png"), this);
 	m_searchArea->setMaximumWidth(200);
 	m_searchArea->setPlaceholderText(tr("Recherche Google"));
 	m_searchArea->move(-50, -50);
@@ -52,11 +51,11 @@ SMainWindow::SMainWindow(SWebView *view, bool isPrivateBrowsing) :
 
 	// END OF TEST AREA
 
-    if(SMainWindow::SSettings->value("preferences/saveTabs", false).toBool() && !view)
+    if(mApp->settings()->value("preferences/saveTabs", false).toBool() && !view)
 		restoreTabs();
-    else if(SMainWindow::SSettings->value("preferences/themes/changed", false).toBool()) {
+    else if(mApp->settings()->value("preferences/themes/changed", false).toBool()) {
         restoreTabs();
-        SMainWindow::SSettings->setValue("preferences/themes/changed", false);
+        mApp->settings()->setValue("preferences/themes/changed", false);
     }
     else if (view) {
         m_tabs->createWebTab(tr("Nouvel onglet"), view);
@@ -64,9 +63,10 @@ SMainWindow::SMainWindow(SWebView *view, bool isPrivateBrowsing) :
 	else
 		m_tabs->createDefaultWebTab();
 
+    QMessageBox::information(this, "DEBUG", "Theme path: " + mApp->themePath());
 	// Load menus and tool bar
 	loadMenus();
-	loadToolBar(m_actions->themePath + "toolBar");
+    loadToolBar(mApp->themePath() + "/toolBar");
 
     m_splitter->addWidget(m_tabs);
     setCentralWidget(m_splitter);
@@ -99,7 +99,7 @@ void SMainWindow::loadMenus()
 	menuBar()->addMenu(m_menus[6]);
     menuBar()->addMenu(m_menus[7]);
 
-	if (SMainWindow::SSettings->value("preferences/showMenuBar", false).toBool())
+    if (mApp->settings()->value("preferences/showMenuBar", false).toBool())
 		menuBar()->setVisible(true);
 	else 
 		menuBar()->setVisible(false);
@@ -376,7 +376,7 @@ void SMainWindow::next()
 void SMainWindow::home()
 {
 	if (currentPage())
-		currentPage()->load(SMainWindow::SSettings->value("preferences/homePage", "http://google.com").toUrl());
+        currentPage()->load(mApp->settings()->value("preferences/homePage", "http://google.com").toUrl());
 }
 
 void SMainWindow::refresh()
@@ -389,7 +389,7 @@ void SMainWindow::stop()
 {
 	if (currentPage()) {
 		currentPage()->stop();
-		m_actions->refreshOrStop->setIcon(QIcon(m_actions->themePath + "refresh.png"));
+        m_actions->refreshOrStop->setIcon(QIcon(mApp->themePath() + "/refresh.png"));
 		m_actions->refreshOrStop->setText(tr("Rafraîchir la page"));
 		m_actions->refreshOrStop->setShortcuts(QKeySequence::Refresh);
 		disconnect(m_actions->refreshOrStop, &QAction::triggered, this, &SMainWindow::stop);
@@ -399,64 +399,64 @@ void SMainWindow::stop()
 
 void SMainWindow::restoreTabs()
 {
-	SMainWindow::SSettings->beginGroup("windowSave/tabs");
-    for(int i{ 0 }; i < SMainWindow::SSettings->value("count", 1).toInt(); ++i) {
+    mApp->settings()->beginGroup("windowSave/tabs");
+    for(int i{ 0 }; i < mApp->settings()->value("count", 1).toInt(); ++i) {
         m_tabs = new STabWidget(this);
-        for(int j{ 0 }; j < SMainWindow::SSettings->value(QString::number(i) + "/count", 1).toInt(); ++j) {
-			if (SMainWindow::SSettings->value(QString::number(i) + "/" + QString::number(j) + "/name", "Google").toString() != "sielonullptr") {
-				m_tabs->createWebTab(SMainWindow::SSettings->value(QString::number(i) + "/" + QString::number(j) + "/name", "Google").toString(),
-									 SMainWindow::SSettings->value(QString::number(i) + "/" + QString::number(j) + "/url", "http://feldrise.com").toUrl());
+        for(int j{ 0 }; j < mApp->settings()->value(QString::number(i) + "/count", 1).toInt(); ++j) {
+            if (mApp->settings()->value(QString::number(i) + "/" + QString::number(j) + "/name", "Google").toString() != "sielonullptr") {
+                m_tabs->createWebTab(mApp->settings()->value(QString::number(i) + "/" + QString::number(j) + "/name", "Google").toString(),
+                                     mApp->settings()->value(QString::number(i) + "/" + QString::number(j) + "/url", "http://feldrise.com").toUrl());
 			}
         }
 
-        m_tabs->setCurrentIndex(SMainWindow::SSettings->value(QString::number(i) + "/focused", 0).toInt());
+        m_tabs->setCurrentIndex(mApp->settings()->value(QString::number(i) + "/focused", 0).toInt());
         m_splitter->addWidget(m_tabs);
     }
-	SMainWindow::SSettings->endGroup();
+    mApp->settings()->endGroup();
 }
 
 void SMainWindow::saveTabs()
 {
     if (!privateBrowsing) {
-        SMainWindow::SSettings->beginGroup("windowSave/tabs");
-        SMainWindow::SSettings->remove("");
-        SMainWindow::SSettings->setValue("count", m_splitter->count());
+        mApp->settings()->beginGroup("windowSave/tabs");
+        mApp->settings()->remove("");
+        mApp->settings()->setValue("count", m_splitter->count());
 
         for (int i{ 0 }; i < m_splitter->count(); ++i) {
             m_tabs = static_cast<STabWidget*>(m_splitter->widget(i));
 
             for(int j{ 0 }; j < m_tabs->count(); ++j) {
-                SMainWindow::SSettings->setValue(QString::number(i) + "/focused", m_tabs->currentIndex());
-                SMainWindow::SSettings->setValue(QString::number(i) + "/count", m_tabs->count());
+                mApp->settings()->setValue(QString::number(i) + "/focused", m_tabs->currentIndex());
+                mApp->settings()->setValue(QString::number(i) + "/count", m_tabs->count());
                 m_tabs->setCurrentIndex(j);
 
 				if (currentPage()) {
-					SMainWindow::SSettings->setValue(QString::number(i) + "/" + QString::number(j) + "/name", currentPage()->title());
-					SMainWindow::SSettings->setValue(QString::number(i) + "/" + QString::number(j) + "/url", currentPage()->url());
-					SMainWindow::SSettings->endGroup();
+                    mApp->settings()->setValue(QString::number(i) + "/" + QString::number(j) + "/name", currentPage()->title());
+                    mApp->settings()->setValue(QString::number(i) + "/" + QString::number(j) + "/url", currentPage()->url());
+                    mApp->settings()->endGroup();
 
-					if (!SMainWindow::SSettings->value("preferences/enableCookies", true).toBool())
+                    if (!mApp->settings()->value("preferences/enableCookies", true).toBool())
 						currentPage()->page()->profile()->cookieStore()->deleteAllCookies();
 
-					SMainWindow::SSettings->beginGroup("windowSave/tabs");
+                    mApp->settings()->beginGroup("windowSave/tabs");
 				}
 				else {
-					SMainWindow::SSettings->setValue(QString::number(i) + "/" + QString::number(j) + "/name", "sielonullptr");
-					SMainWindow::SSettings->setValue(QString::number(i) + "/" + QString::number(j) + "/url", "sielonullptr");
+                    mApp->settings()->setValue(QString::number(i) + "/" + QString::number(j) + "/name", "sielonullptr");
+                    mApp->settings()->setValue(QString::number(i) + "/" + QString::number(j) + "/url", "sielonullptr");
 				}
             }
         }
-        SMainWindow::SSettings->endGroup();
+        mApp->settings()->endGroup();
     }
 
 }
 
 void SMainWindow::saveWinState()
 {
-    SMainWindow::SSettings->beginGroup("windowSave/attributes");
-    SMainWindow::SSettings->setValue("size", size());
-    SMainWindow::SSettings->setValue("pos", pos());
-    SMainWindow::SSettings->endGroup();
+    mApp->settings()->beginGroup("windowSave/attributes");
+    mApp->settings()->setValue("size", size());
+    mApp->settings()->setValue("pos", pos());
+    mApp->settings()->endGroup();
 }
 
 void SMainWindow::createTab(QWidget * widget, const QString & title)
@@ -471,16 +471,16 @@ void SMainWindow::closeEvent(QCloseEvent * event)
     QDate date{ QDate::currentDate() };
 
 
-	SMainWindow::SSettings->beginGroup("History/" + QString::number(date.year()) + "/" + QString::number(date.month()) + "/" + QString::number(date.day()));
-	int itemNum{ SMainWindow::SSettings->value("itemNum", 0).toInt() };
+    mApp->settings()->beginGroup("History/" + QString::number(date.year()) + "/" + QString::number(date.month()) + "/" + QString::number(date.day()));
+    int itemNum{ mApp->settings()->value("itemNum", 0).toInt() };
 
 	for (int i{ 0 }; i < SMainWindow::curSessionHistory.size(); ++i) {
-		SMainWindow::SSettings->setValue(QString::number(itemNum) + "/title", SMainWindow::curSessionHistory[i].title);
-		SMainWindow::SSettings->setValue(QString::number(itemNum) + "/url", SMainWindow::curSessionHistory[i].url);
+        mApp->settings()->setValue(QString::number(itemNum) + "/title", SMainWindow::curSessionHistory[i].title);
+        mApp->settings()->setValue(QString::number(itemNum) + "/url", SMainWindow::curSessionHistory[i].url);
 		++itemNum;
 	}
-	SMainWindow::SSettings->setValue("itemNum", itemNum);
-	SMainWindow::SSettings->endGroup();
+    mApp->settings()->setValue("itemNum", itemNum);
+    mApp->settings()->endGroup();
 
 	SMainWindow::curSessionHistory.clear();
 
