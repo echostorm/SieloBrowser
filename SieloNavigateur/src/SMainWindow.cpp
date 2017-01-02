@@ -52,14 +52,14 @@ SMainWindow::SMainWindow(SWebView *view, bool isPrivateBrowsing) :
 
 	// END OF TEST AREA
 
-	if(SMainWindow::SSettings->value("preferences/saveTabs", false).toBool() && !view)
+    if(SMainWindow::SSettings->value("preferences/saveTabs", false).toBool() && !view)
 		restoreTabs();
     else if(SMainWindow::SSettings->value("preferences/themes/changed", false).toBool()) {
         restoreTabs();
         SMainWindow::SSettings->setValue("preferences/themes/changed", false);
     }
-	else if (view) {
-		m_tabs->createWebTab(tr("Nouvel onglet"), view);
+    else if (view) {
+        m_tabs->createWebTab(tr("Nouvel onglet"), view);
 	}
 	else
 		m_tabs->createDefaultWebTab();

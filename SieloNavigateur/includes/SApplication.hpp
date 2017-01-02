@@ -106,6 +106,7 @@ public:
 
     SMainWindow *getWindow() const;
     SMainWindow *createWindow(bool isPrivateWindow = false, const QUrl &startUrl = QUrl());
+    SMainWindow *createWindow(bool isPrivateWindow = false, SWebView *startView = nullptr);
 
     SPluginProxy *plugins() { return m_plugins; }
     const QString &version() const { return m_version; }

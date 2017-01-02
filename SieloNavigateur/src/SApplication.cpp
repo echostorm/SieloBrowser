@@ -59,7 +59,7 @@ SApplication::SApplication(int &argc, char **argv) :
         return;
     }
 
-    SMainWindow *fen{ createWindow() };
+    SMainWindow *fen{ createWindow(false, nullptr) };
     fen->show();
 
     if(needToShowTxt()) {
@@ -80,9 +80,18 @@ SApplication::~SApplication()
 
 SMainWindow *SApplication::createWindow(bool isPrivateWindow, const QUrl &startUrl)
 {
-    SWebView *view{ new SWebView(nullptr, nullptr, startUrl) };
-
+    SWebView *view{ new SWebView() };
+    view->load(startUrl);
     SMainWindow *fen{ new SMainWindow(view, isPrivateWindow) };
+    connect(fen, &SMainWindow::destroyed, this, &SApplication::windowDestroyed);
+
+    m_windows.prepend(fen);
+    return fen;
+}
+
+SMainWindow *SApplication::createWindow(bool isPrivateWindow, SWebView *startView)
+{
+    SMainWindow *fen{ new SMainWindow(startView, isPrivateWindow) };
     connect(fen, &SMainWindow::destroyed, this, &SApplication::windowDestroyed);
 
     m_windows.prepend(fen);
