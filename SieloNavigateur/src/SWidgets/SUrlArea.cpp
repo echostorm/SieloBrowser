@@ -2,7 +2,7 @@
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
 #include "includes/SWidgets/SWebView.hpp"
-#include "includes/SWindows/SHistory.hpp"
+#include "includes/SWindows/History/SHistory.hpp"
 #include "includes/SApplication.hpp"
 
 #include <QMessageBox>
@@ -109,11 +109,11 @@ void SUrlArea::loadFinished()
 
 	if(!m_parent->privateBrowsing) {
 		if (view->url().toString() == "about:blank")
-			return;
-		else if(SMainWindow::curSessionHistory.size() <= 0)
-			SMainWindow::addHistoryItem(view->title(), view->url());
-		else if(SMainWindow::getLastHistoryItem().title != view->title())
-			SMainWindow::addHistoryItem(view->title(), view->url());
+            return;
+        else {
+            SHistoryItem item{ view->title(), view->url() };
+            mApp->history()->addItem(item);
+        }
 	}
 }
 

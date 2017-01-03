@@ -52,10 +52,6 @@ public:
 	SWebView* currentPage();
 	QVector<SMenu*>& getMenus() { return m_menus; }
 
-    static SHistoryItem&  getLastHistoryItem();
-	static void addHistoryItem(QString title, QUrl url);
-
-	static QVector<SHistoryItem> curSessionHistory;
 	static QVector<SDownloadItem*> dlItems;
 
 	bool privateBrowsing{ false };

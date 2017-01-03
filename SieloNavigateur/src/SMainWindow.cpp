@@ -9,7 +9,9 @@
 #include "includes/SWidgets/SSearchArea.hpp"
 
 #include "includes/SWindows/SDownload.hpp"
-#include "includes/SWindows/SHistory.hpp"
+
+#include "includes/SWindows/History/SHistory.hpp"
+#include "includes/SWindows/History/SHistoryItem.hpp"
 
 #include <QMessageBox>
 #include <QFile>
@@ -20,7 +22,6 @@ const unsigned int THEME_V0 = 1;
 const unsigned int THEME_V1 = 2;
 const unsigned int THEME_V2 = 3;
 
-QVector<SHistoryItem> SMainWindow::curSessionHistory = QVector<SHistoryItem>{};
 QVector<SDownloadItem*> SMainWindow::dlItems = QVector<SDownloadItem*>{};
 
 SMainWindow::SMainWindow(SWebView *view, bool isPrivateBrowsing) :
@@ -202,21 +203,6 @@ void SMainWindow::changeTabUrl(const QUrl& newUrl)
 	if (newUrl.toString() != tr("html/page_blanche"))
 		m_urlArea->setText(newUrl.toString());
 
-}
-
-SHistoryItem &SMainWindow::getLastHistoryItem() {
-        if (SMainWindow::curSessionHistory.size() > 0)
-            return SMainWindow::curSessionHistory[SMainWindow::curSessionHistory.size() - 1];
-        else
-            SHistoryItem();
-}
-
-void SMainWindow::addHistoryItem(QString title, QUrl url)
-{
-	SHistoryItem item{};
-	item.title = title;
-	item.url = url;
-	SMainWindow::curSessionHistory.push_back(item);
 }
 
 //-- PUBLIC SLOTS
@@ -467,24 +453,10 @@ void SMainWindow::createTab(QWidget * widget, const QString & title)
 void SMainWindow::closeEvent(QCloseEvent * event)
 {
     saveTabs();
-
-    QDate date{ QDate::currentDate() };
-
-
-    mApp->settings()->beginGroup("History/" + QString::number(date.year()) + "/" + QString::number(date.month()) + "/" + QString::number(date.day()));
-    int itemNum{ mApp->settings()->value("itemNum", 0).toInt() };
-
-	for (int i{ 0 }; i < SMainWindow::curSessionHistory.size(); ++i) {
-        mApp->settings()->setValue(QString::number(itemNum) + "/title", SMainWindow::curSessionHistory[i].title);
-        mApp->settings()->setValue(QString::number(itemNum) + "/url", SMainWindow::curSessionHistory[i].url);
-		++itemNum;
-	}
-    mApp->settings()->setValue("itemNum", itemNum);
-    mApp->settings()->endGroup();
-
-	SMainWindow::curSessionHistory.clear();
-
     saveWinState();
+    mApp->history()->save();
+
+    mApp->history()->deleteAll();
 
 	event->accept();
 }

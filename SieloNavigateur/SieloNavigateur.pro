@@ -14,14 +14,17 @@ SOURCES += \
     src/SWidgets/SToolBar.cpp \
     src/SWidgets/SUrlArea.cpp \
     src/SWidgets/SWebView.cpp \
-    src/SWindows/SHistory.cpp \
     src/SWindows/SHtmlSrcViewver.cpp \
     src/SWindows/SDownload.cpp \
     src/SWindows/SBookmarks.cpp \
     src/SWindows/SPreferences.cpp \
     src/SApplication.cpp \
     src/SPlugins/SPlugins.cpp \
-    src/SPlugins/SPluginProxy.cpp
+    src/SPlugins/SPluginProxy.cpp \
+    src/SWindows/History/SHistory.cpp \
+    src/SWindows/History/SHistoryManager.cpp \
+    src/SWindows/History/SHistoryView.cpp \
+    src/SWindows/History/SHistoryModel.cpp
 
 HEADERS += \
     includes/SMainWindow.hpp \
@@ -31,7 +34,6 @@ HEADERS += \
     includes/SWidgets/SToolBar.hpp \
     includes/SWidgets/SUrlArea.hpp \
     includes/SWidgets/SWebView.hpp \
-    includes/SWindows/SHistory.hpp \
     includes/SWindows/SHtmlSrcViewver.hpp \
     includes/SWindows/SDownload.hpp \
     includes/SActions.hpp \
@@ -40,7 +42,12 @@ HEADERS += \
     includes/SApplication.hpp \
     includes/SPlugins/SPluginInterface.hpp \
     includes/SPlugins/SPlugins.hpp \
-    includes/SPlugins/SPluginProxy.hpp
+    includes/SPlugins/SPluginProxy.hpp \
+    includes/SWindows/History/SHistory.hpp \
+    includes/SWindows/History/SHistoryItem.hpp \
+    includes/SWindows/History/SHistoryManager.hpp \
+    includes/SWindows/History/SHistoryView.hpp \
+    includes/SWindows/History/SHistoryModel.hpp
     includes/SApplication.hpp
 
 RESOURCES += \

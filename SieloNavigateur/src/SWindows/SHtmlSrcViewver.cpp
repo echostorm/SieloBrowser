@@ -1,7 +1,6 @@
 #include "includes/SWindows/SHtmlSrcViewver.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SWidgets/SWebView.hpp"
-#include "includes/SWindows/SHistory.hpp"
 
 template<typename Arg, typename R, typename C>
 struct InvokeWrapper {
@@ -134,8 +133,8 @@ SHtmlSrcViewver::SHtmlSrcViewver(SMainWindow *parent) :
 	m_htmlHighlighter = new SHtmlHighlighter(m_src->document());
 	m_parent->currentPage()->page()->toHtml(invoke(m_src, &QTextEdit::setPlainText));
 
-	connect(m_boxBtn, &QDialogButtonBox::accepted, this, &SHistoryWindow::accept);
-	connect(m_boxBtn, &QDialogButtonBox::rejected, this, &SHistoryWindow::reject);
+    connect(m_boxBtn, &QDialogButtonBox::accepted, this, &SHtmlSrcViewver::accept);
+    connect(m_boxBtn, &QDialogButtonBox::rejected, this, &SHtmlSrcViewver::reject);
 }
 
 SHtmlSrcViewver::~SHtmlSrcViewver()

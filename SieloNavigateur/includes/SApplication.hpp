@@ -33,6 +33,8 @@ enum ObjectName {
 class SWebView;
 class SMainWindow;
 class SPluginProxy;
+class SHistory;
+class SHistoryItem;
 
 // This is a basic dialog to show text from the feldrise website at the start of Sielo
 class TextToShow : public QDialog
@@ -116,8 +118,9 @@ public:
     const QString &dataPath() const { return m_dataPath; }
     const QString &themePath() const { return m_themePath; }
 
-    SPluginProxy *plugins() { return m_plugins; }
     QSettings *settings() { return m_settings; }
+    SPluginProxy *plugins() { return m_plugins; }
+    SHistory *history() { return m_history; }
 
     bool needMaJ();
     bool needToShowTxt();
@@ -136,6 +139,7 @@ private:
 
     QSettings *m_settings{ nullptr };
     SPluginProxy *m_plugins{ nullptr };
+    SHistory *m_history{ nullptr };
 
     int m_currentTheme{};
     QString m_themePath{};

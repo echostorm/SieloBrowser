@@ -3,6 +3,8 @@
 #include "includes/SWindows/SPreferences.hpp"
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SPlugins/SPluginProxy.hpp"
+#include "includes/SWindows/History/SHistory.hpp"
+#include "includes/SWindows/History/SHistoryItem.hpp"
 
 #include <QWebEngineView>
 #include <QNetworkRequest>
@@ -22,8 +24,10 @@ SApplication *SApplication::instance()
 SApplication::SApplication(int &argc, char **argv) :
     QApplication(argc, argv),
     m_settings(new QSettings(m_dataPath + "/settings.ini", QSettings::IniFormat)),
-    m_plugins(new SPluginProxy())
+    m_plugins(new SPluginProxy()),
+    m_history(new SHistory(this))
 {
+
     loadSettings();
 
     QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);

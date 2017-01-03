@@ -6,15 +6,19 @@
 #include <QtWidgets>
 #include <QtWebEngineWidgets>
 #include <QStyle>
+#include <QDataStream>
+#include <QSettings>
 
 #include "includes/SWidgets/SWebView.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SApplication.hpp"
+#include "includes/SWindows/History/SHistoryItem.hpp"
 
 
 int main(int argc, char **argv)
 {
+    qRegisterMetaTypeStreamOperators<SHistoryItem>("SHistoryItem");
     SApplication app(argc, argv);
 
 	QString locale = QLocale::system().name().section('_', 0, 0);
