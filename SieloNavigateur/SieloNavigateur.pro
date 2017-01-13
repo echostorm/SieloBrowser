@@ -24,7 +24,10 @@ SOURCES += \
     src/SWindows/History/SHistory.cpp \
     src/SWindows/History/SHistoryManager.cpp \
     src/SWindows/History/SHistoryView.cpp \
-    src/SWindows/History/SHistoryModel.cpp
+    src/SWindows/History/SHistoryModel.cpp \
+    src/SWidgets/Web/SWebHitTestResult.cpp \
+    src/SWidgets/Web/SWebPage.cpp \
+    src/SDialogs/SCheckBoxDialog.cpp
 
 HEADERS += \
     includes/SMainWindow.hpp \
@@ -47,7 +50,11 @@ HEADERS += \
     includes/SWindows/History/SHistoryItem.hpp \
     includes/SWindows/History/SHistoryManager.hpp \
     includes/SWindows/History/SHistoryView.hpp \
-    includes/SWindows/History/SHistoryModel.hpp
+    includes/SWindows/History/SHistoryModel.hpp \
+    includes/SWidgets/Web/SWebView.hpp \
+    includes/SWidgets/Web/SWebPage.hpp \
+    includes/SWidgets/Web/SWebHitTestResult.hpp \
+    includes/SDialogs/SCheckBoxDialog.hpp
     includes/SApplication.hpp
 
 RESOURCES += \
