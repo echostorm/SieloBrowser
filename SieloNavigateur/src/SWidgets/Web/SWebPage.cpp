@@ -10,6 +10,7 @@
 #include <QPointer>
 #include <QTimer>
 #include <QWebEngineSettings>
+#include <QDesktopServices>
 
 SWebPage::SWebPage(QObject *parent) :
     QWebEnginePage(parent),
@@ -187,4 +188,58 @@ QWebEnginePage *SWebPage::createWindow(QWebEnginePage::WebWindowType type)
 
     //TODO: do
 
+}
+
+void SWebPage::handleUnknowProtocol(const QUrl &url)
+{
+    const QString protocol = url.scheme();
+    QStringList autoOpenProtocols{ mApp->settings()->value("AutomaticalyOpenProtocols", QStringList()).toStringList() };
+    QStringList blockedProtocols{ mApp->settings()->value("BlockedProtocols", QStringList()).toStringList() };
+
+    if (protocol == QLatin1String("mailto")) {
+        desktopServiceOpen(url);
+        return;
+    }
+
+    if (blockedProtocols.contains(protocol))
+        return;
+
+    if (autoOpenProtocols.contains(protocol)) {
+        desktopServiceOpen(url);
+        return;
+    }
+
+    SCheckBoxDialog dialog(QDialogButtonBox::Yes | QDialog::No, view());
+
+    const QString text{ tr("Sielo n'arrive pas à traiter les protocoles <b>%1</b>. "
+                           "Voulez vous que Sielo tente malgré tout d'ouvrir le "
+                           "lien <b>%2%</b> avec un application système ?").arg(protocol, url.toString()) };
+    dialog.setText(text);
+    dialog.setCheckBoxText(tr("Se rappler de mon choix pour ce protocole"));
+    dialog.setWindowTitle(tr("Requête d'un protocole externe"));
+
+    switch (dialog.exec()) {
+    case QDialog::Accepted:
+        if (dialog.isChecked()) {
+            autoOpenProtocols.append(protocol);
+            mApp->settings()->setValue("AutomaticalyOpenProtocols", autoOpenProtocols);
+        }
+
+        QDesktopServices::openUrl(url);
+        break;
+    case QDialog::Rejected:
+        if (dialog.isChecked()) {
+            blockedProtocols.append(protocol);
+            mApp->settings()->setValue("BlockedProtocols", blockedProtocols);
+        }
+    default:
+        break;
+    }
+
+}
+
+void SWebPage::desktopServiceOpen(const QUrl &url)
+{
+    //TODO: do some actions
+    QDesktopServices::openUrl(url);
 }
