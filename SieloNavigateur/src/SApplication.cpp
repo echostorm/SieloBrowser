@@ -151,6 +151,11 @@ bool SApplication::needToShowTxt()
     return (showTxt == "true\n");
 }
 
+bool SApplication::isUrlValid(const QUrl &url)
+{
+    return url.isValid() && !url.scheme().isEmpty() && (!url.host().isEmpty() || !url.path().isEmpty() || url.hasQuery());
+}
+
 TextToShow::TextToShow(QWidget *parent) :
     QDialog(parent)
 {

@@ -124,6 +124,7 @@ public:
 
     bool needMaJ();
     bool needToShowTxt();
+    bool isUrlValid(const QUrl &url);
 
     static SApplication *instance();
 
