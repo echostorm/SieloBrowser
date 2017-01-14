@@ -54,7 +54,8 @@ HEADERS += \
     includes/SWidgets/Web/SWebView.hpp \
     includes/SWidgets/Web/SWebPage.hpp \
     includes/SWidgets/Web/SWebHitTestResult.hpp \
-    includes/SDialogs/SCheckBoxDialog.hpp
+    includes/SDialogs/SCheckBoxDialog.hpp \
+    includes/SWidgets/Web/SLoadRequest.hpp
     includes/SApplication.hpp
 
 RESOURCES += \
