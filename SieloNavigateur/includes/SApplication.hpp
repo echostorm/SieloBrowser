@@ -28,6 +28,20 @@ enum ObjectName {
     ON_TabBar,
     ON_BrowserWindow
 };
+enum NewTabType {
+    NTT_SelectedTab =1,
+    NTT_NotSelectedTab = 2,
+    NTT_CleanTab = 4,
+    NTT_TabAtEnd = 8,
+    NTT_NewEmptyTab = 16,
+/* ------------------------- */
+    NTT_SelectedNewEmptyTab = NTT_SelectedTab | NTT_TabAtEnd | NTT_NewEmptyTab,
+    NTT_SelectedTabAtEnd = NTT_SelectedTab | NTT_TabAtEnd,
+    NTT_NotSelectedTabAtEnd = NTT_NotSelectedTab | NTT_TabAtEnd,
+    NTT_CleanSelectedTabAtEnd = NTT_SelectedTab | NTT_TabAtEnd | NTT_CleanTab,
+    NTT_CleanSelectedTab = NTT_CleanTab | NTT_SelectedTab,
+    NTT_CleanNotSelectedTab = NTT_CleanTab, NTT_NotSelectedTab
+};
 }
 
 class SWebView;
