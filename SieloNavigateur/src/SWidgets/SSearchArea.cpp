@@ -1,6 +1,6 @@
 #include "includes/SWidgets/SSearchArea.hpp"
 #include "includes/SMainWindow.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 
 #include <QUrl>
 

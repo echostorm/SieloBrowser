@@ -9,7 +9,7 @@
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SWidgets/SSearchArea.hpp"
 #include "includes/SWidgets/SUrlArea.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 
 #include <QFileDialog>
 #include <QInputDialog>

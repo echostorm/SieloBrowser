@@ -13,7 +13,6 @@ SOURCES += \
     src/SWidgets/STabWidget.cpp \
     src/SWidgets/SToolBar.cpp \
     src/SWidgets/SUrlArea.cpp \
-    src/SWidgets/SWebView.cpp \
     src/SWindows/SHtmlSrcViewver.cpp \
     src/SWindows/SDownload.cpp \
     src/SWindows/SBookmarks.cpp \
@@ -27,7 +26,9 @@ SOURCES += \
     src/SWindows/History/SHistoryModel.cpp \
     src/SWidgets/Web/SWebHitTestResult.cpp \
     src/SWidgets/Web/SWebPage.cpp \
-    src/SDialogs/SCheckBoxDialog.cpp
+    src/SDialogs/SCheckBoxDialog.cpp \
+    src/SWidgets/Web/SWebView.cpp \
+    src/SWidgets/OLDSWebView.cpp
 
 HEADERS += \
     includes/SMainWindow.hpp \
@@ -36,7 +37,6 @@ HEADERS += \
     includes/SWidgets/STabWidget.hpp \
     includes/SWidgets/SToolBar.hpp \
     includes/SWidgets/SUrlArea.hpp \
-    includes/SWidgets/SWebView.hpp \
     includes/SWindows/SHtmlSrcViewver.hpp \
     includes/SWindows/SDownload.hpp \
     includes/SActions.hpp \
@@ -55,7 +55,8 @@ HEADERS += \
     includes/SWidgets/Web/SWebPage.hpp \
     includes/SWidgets/Web/SWebHitTestResult.hpp \
     includes/SDialogs/SCheckBoxDialog.hpp \
-    includes/SWidgets/Web/SLoadRequest.hpp
+    includes/SWidgets/Web/SLoadRequest.hpp \
+    includes/SWidgets/OLDSWebView.hpp
     includes/SApplication.hpp
 
 RESOURCES += \

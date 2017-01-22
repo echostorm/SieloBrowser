@@ -1,4 +1,4 @@
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SApplication.hpp"

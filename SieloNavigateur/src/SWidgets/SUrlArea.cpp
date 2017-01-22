@@ -1,7 +1,7 @@
 #include "includes/SWidgets/SUrlArea.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SActions.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 #include "includes/SWindows/History/SHistory.hpp"
 #include "includes/SApplication.hpp"
 

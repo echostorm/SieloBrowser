@@ -2,6 +2,7 @@
 #define SWEBVIEW_HPP
 
 #include <QApplication>
+#include <QOpenGLWidget>
 #include <QWebEngineView>
 #include <QWebEnginePage>
 #include <QWidget>
@@ -22,7 +23,10 @@ public:
     SWebView(QWidget *parent = nullptr);
     ~SWebView();
 
-    QIcon icon(bool allowNull = false) const;
+    bool event(QEvent *event);
+    bool eventFilter(QObject *watched, QEvent *event);
+
+//  QIcon icon(bool allowNull = false) const;
 
     QString title() const;
     bool isTitleEmpty() const;
@@ -146,6 +150,7 @@ private:
     QPointF m_clickedPos{};
 
     SWebPage *m_page{ nullptr };
+    QPointer<QOpenGLWidget> m_child{};
 };
 
 #endif // SWEBVIEW_HPP

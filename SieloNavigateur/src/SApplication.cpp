@@ -1,7 +1,7 @@
 #include "includes/SApplication.hpp"
 #include "includes/SMainWindow.hpp"
 #include "includes/SWindows/SPreferences.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 #include "includes/SPlugins/SPluginProxy.hpp"
 #include "includes/SWindows/History/SHistory.hpp"
 #include "includes/SWindows/History/SHistoryItem.hpp"

@@ -1,6 +1,6 @@
 #include "includes/SWindows/SBookmarks.hpp"
 #include "includes/SMainWindow.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 #include "includes/SWidgets/SMenu.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
 #include "includes/SApplication.hpp"

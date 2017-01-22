@@ -1,6 +1,6 @@
 #include "includes/SWindows/SPreferences.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 #include "includes/SApplication.hpp"
 
 #include <QWebEngineSettings>

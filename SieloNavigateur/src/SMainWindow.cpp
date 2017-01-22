@@ -2,7 +2,7 @@
 #include "includes/SActions.hpp"
 #include "includes/SApplication.hpp"
 #include "includes/SWidgets/STabWidget.hpp"
-#include "includes/SWidgets/SWebView.hpp"
+#include "includes/SWidgets/OLDSWebView.hpp"
 #include "includes/SWidgets/SToolBar.hpp"
 #include "includes/SWidgets/SMenu.hpp"
 #include "includes/SWidgets/SUrlArea.hpp"
