@@ -103,3 +103,23 @@ bool SWebView::isTitleEmpty() const
 {
     return QWebEngineView::title().isEmpty();
 }
+
+SWebPage* SWebView::page() const
+{
+    return m_page;
+}
+
+void SWebView::setPage(SWebPage *page)
+{
+    if (m_page == page)
+        return;
+
+    m_page = page;
+    m_page->setParent(this);
+    QWebEngineView::setPage(m_page);
+
+    zoomReset();
+    initActions();
+
+    // TODO: Plugins signal, privacy, ...
+}
