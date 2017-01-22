@@ -3,6 +3,7 @@
 #include "includes/SWidgets/Web/SWebPage.hpp"
 #include "includes/SWidgets/Web/SWebHitTestResult.hpp"
 
+#include <QHostInfo>
 
 SWebView::SWebView(QWidget *parent) :
     QWebEngineView(parent),
@@ -122,4 +123,56 @@ void SWebView::setPage(SWebPage *page)
     initActions();
 
     // TODO: Plugins signal, privacy, ...
+}
+
+void SWebView::load(const QUrl &url)
+{
+    QWebEngineView::load(url);
+
+    if (!m_firstLoad) {
+        m_firstLoad = true;
+    }
+}
+
+void SWebView::load(const SLoadRequest &request)
+{
+    const QUrl requestUrl = request.url();
+
+    if (requestUrl.isEmpty())
+        return;
+
+    if (requestUrl.scheme() == QLatin1String("javascript")) {
+        const QString scriptSrc = requestUrl.toString().mid(11);
+        // We will probaly add code for Herve
+        if (scriptSrc.contains(QLatin1Char('%')))
+            page()->runJavaScript(QUrl::fromPercentEncoding(scriptSrc.toUtf8()));
+        else
+            page()->runJavaScript(scriptSrc);
+
+        return;
+    }
+
+    if (mApp->isUrlValid(requestUrl)) {
+        loadRequest(request);
+        return;
+    }
+
+    if (!requestUrl.isEmpty() &&
+        requestUrl.scheme().isEmpty() &&
+        !requestUrl.path().contains(QLatin1Char(' ')) &&
+        !requestUrl.path().contains(QLatin1Char('.'))) {
+
+        QUrl url{ QStringLiteral("http://") + requestUrl.path() };
+        if (url.isValid()) {
+            QHostInfo info{ QHostInfo::fromName(url.path()) };
+            if (info.error() == QHostInfo::NoError) {
+                SLoadRequest req = request;
+                req.setUrl(url);
+                loadRequest(req);
+                return;
+            }
+        }
+    }
+
+    // TODO: Manage search !
 }
