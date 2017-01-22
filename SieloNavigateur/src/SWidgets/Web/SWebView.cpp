@@ -176,3 +176,24 @@ void SWebView::load(const SLoadRequest &request)
 
     // TODO: Manage search !
 }
+
+bool SWebView::isLoading() const
+{
+    return m_progress < 100;
+}
+
+bool SWebView::loadingProgress() const
+{
+    return m_progress;
+}
+
+bool SWebView::zoomLevel() const
+{
+    return m_currentZoomLevel;
+}
+
+bool SWebView::setZoomLevel(int level)
+{
+    m_currentZoomLevel = level;
+    applyZoom();
+}
