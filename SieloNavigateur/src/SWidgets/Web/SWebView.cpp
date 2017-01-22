@@ -85,3 +85,21 @@ bool SWebView::eventFilter(QObject *watched, QEvent *event)
 
     return QWebEngineView::eventFilter(watched, event);
 }
+
+QString SWebView::title() const
+{
+    QString title{ title() };
+
+    if (title.isEmpty())
+        title = url().toString(QUrl::RemoveFragment);
+
+    if (title.isEmpty() || title == QLatin1String("about:blank"))
+        return tr("Page vide");
+
+    return title;
+}
+
+bool SWebView::isTitleEmpty() const
+{
+    return QWebEngineView::title().isEmpty();
+}
