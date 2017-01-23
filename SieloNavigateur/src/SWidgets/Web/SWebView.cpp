@@ -197,3 +197,10 @@ bool SWebView::setZoomLevel(int level)
     m_currentZoomLevel = level;
     applyZoom();
 }
+
+QPointF SWebView::mapToViewport(const QPointF &pos) const
+{
+    return page()->mapToViewport(pos);
+}
+
+
