@@ -44,10 +44,8 @@ public:
     void setZoomLevel(int level);
 
     QPointF mapToViewport(const QPointF &pos) const;
-    QRect scrollBarGemoetry(Qt::Orientation orientation) const;
 
     //TODO: History, Notification
-    bool eventFilter(QObject *watched, QEvent *event);
 
     QWidget *inputWidget() const;
     virtual QWidget *overlayWidget() = 0;
