@@ -4,6 +4,7 @@
 #include "includes/SWidgets/Web/SWebHitTestResult.hpp"
 
 #include <QHostInfo>
+#include <QWebEngineHistory>
 
 QList<int> SWebView::zoomLevels()
 {
@@ -236,5 +237,25 @@ void SWebView::zoomReset()
     if (m_currentZoomLevel != defaultZoomLevel) {
         m_currentZoomLevel = defaultZoomLevel;
         applyZoom();
+    }
+}
+
+void SWebView::back()
+{
+    QWebEngineHistory* history{ page()->history() };
+
+    if (history->canGoBack()) {
+        history->back();
+        emit urlChanged(url());
+    }
+}
+
+void SWebView::forward()
+{
+    QWebEngineHistory* history{ page()->history() };
+
+    if (history->canGoForward()) {
+        history->forward();
+        emit urlChanged(url());
     }
 }
