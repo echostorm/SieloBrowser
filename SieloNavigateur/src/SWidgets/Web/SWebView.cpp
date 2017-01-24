@@ -5,6 +5,12 @@
 
 #include <QHostInfo>
 
+QList<int> SWebView::zoomLevels()
+{
+    return QList<int>() << 10 << 20 << 30 << 40 << 50 << 60 << 80 << 90 << 100 <<
+                           110 << 120 << 130 << 140 << 150 << 160 << 170 << 180 << 190 << 200;
+}
+
 SWebView::SWebView(QWidget *parent) :
     QWebEngineView(parent),
     m_currentZoomLevel(zoomLevel().indexOf(100)),
@@ -203,4 +209,32 @@ QPointF SWebView::mapToViewport(const QPointF &pos) const
     return page()->mapToViewport(pos);
 }
 
+QWidget *SWebView::inputWidget() const
+{
+    return m_child ? m_child : const_cast<SWebView*>(this);
+}
 
+void SWebView::zoomIn()
+{
+    if (m_currentZoomLevel < zoomLevels().count() - 1) {
+        ++m_currentZoomLevel;
+        applyZoom();
+    }
+}
+
+void SWebView::zoomOut()
+{
+    if (m_currentZoomLevel > 0) {
+        --m_currentZoomLevel;
+        applyZoom();
+    }
+}
+
+void SWebView::zoomReset()
+{
+    int defaultZoomLevel{ mApp->settings()->value("Preferences/ZoomLevel", zoomLevels().indexOf(100)).toInt() };
+    if (m_currentZoomLevel != defaultZoomLevel) {
+        m_currentZoomLevel = defaultZoomLevel;
+        applyZoom();
+    }
+}

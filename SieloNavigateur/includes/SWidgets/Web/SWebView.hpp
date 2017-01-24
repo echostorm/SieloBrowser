@@ -20,6 +20,8 @@ class SWebView : public QWebEngineView
     Q_OBJECT
 
 public:
+    static QList<int> zoomLevels();
+
     SWebView(QWidget *parent = nullptr);
     ~SWebView();
 
