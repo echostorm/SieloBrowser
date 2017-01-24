@@ -75,8 +75,7 @@ public slots:
         QKeyEvent event(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
         QApplication::sendEvent(this, &event);
     }
-
-    void reloadBypassCache();
+    void reloadBypassCache() { triggerPageAction(QWebEnginePage::ReloadAndBypassCache); }
 
     void back();
     void forward();
