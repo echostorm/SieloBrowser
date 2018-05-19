@@ -43,6 +43,8 @@
 
 #include <QShowEvent>
 
+#include "Widgets/FloatingButton.hpp"
+
 namespace Sn {
 class BrowserWindow;
 
@@ -127,6 +129,9 @@ public:
 	void p_restoreTab(const SavedTab& tab);
 	void p_restoreTab(const QUrl& url, const QByteArray& history, int zoomLevel);
 
+	void setFloatingButton(QPoint pos, RootFloatingButton::Pattern pattern);
+	void getFloatingButton(QPoint* pos, RootFloatingButton::Pattern* pattern);
+
 public slots:
 	void sNewWindow();
 	void sNewTab();
@@ -161,6 +166,9 @@ private:
 
 	SavedTab m_savedTab{};
 	bool m_isPinned{false};
+
+	QPoint m_fbuttonPos{};
+	RootFloatingButton::Pattern m_fbuttonPattern{RootFloatingButton::Floating};
 
 	static bool s_pinningTab;
 };

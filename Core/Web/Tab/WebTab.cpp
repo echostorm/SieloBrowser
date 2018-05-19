@@ -554,4 +554,16 @@ void WebTab::showEvent(QShowEvent* event)
 	}
 }
 
+void WebTab::setFloatingButton(QPoint pos, RootFloatingButton::Pattern pattern)
+{
+	m_fbuttonPos = pos;
+	m_fbuttonPattern = pattern;
+}
+
+void WebTab::getFloatingButton(QPoint* pos, RootFloatingButton::Pattern* pattern)
+{
+	(*pos) = m_fbuttonPos;
+	(*pattern) = m_fbuttonPattern;
+}
+
 }
