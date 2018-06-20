@@ -97,7 +97,7 @@ QList<QString> Application::paths()
 	paths.append(paths[Application::P_Data] + QLatin1String("/plugins"));
 	paths.append(paths[Application::P_Data] + QLatin1String("/themes"));
 	paths.append(paths[Application::P_Data] + QLatin1String("/locale"));
-	paths.append(paths[Application::P_Data] + QLatin1String("/maquetteGrid"));
+	paths.append(paths[Application::P_Data] + QLatin1String("/maquette-grid"));
 
 	return paths;
 }
@@ -192,8 +192,8 @@ Application::Application(int& argc, char** argv) :
 	m_morpheusFont = QFont(family);
 	m_normalFont = font();*/
 
-	translateApplication();
 	loadSettings();
+	translateApplication();
 
 	// Check command line options with given arguments
 	QUrl startUrl{};
@@ -444,7 +444,7 @@ void Application::loadThemesSettings()
 	// Check if the theme existe
 	if (themeInfo.exists()) {
 		// Check default theme version and update it if needed
-		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 32) {
+		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 33) {
 			if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 11) {
 				QString defaultThemePath{paths()[Application::P_Themes]};
 
@@ -467,7 +467,7 @@ void Application::loadThemesSettings()
 			loadThemeFromResources("firefox-like-light", false);
 			loadThemeFromResources("firefox-like-dark", false);
 			loadThemeFromResources("sielo-default", false);
-			settings.setValue("Themes/defaultThemeVersion", 32);
+			settings.setValue("Themes/defaultThemeVersion", 33);
 		}
 
 		loadTheme(settings.value("Themes/currentTheme", QLatin1String("sielo-default")).toString(),
@@ -478,7 +478,7 @@ void Application::loadThemesSettings()
 		loadThemeFromResources("firefox-like-light", false);
 		loadThemeFromResources("firefox-like-dark", false);
 		loadThemeFromResources();
-		settings.setValue("Themes/defaultThemeVersion", 32);
+		settings.setValue("Themes/defaultThemeVersion", 33);
 	}
 }
 
@@ -487,10 +487,10 @@ void Application::loadTranslationSettings()
 	QSettings settings{};
 	settings.beginGroup("Language");
 
-	if (settings.value("version", 0).toInt() < 5) {
+	if (settings.value("version", 0).toInt() < 8) {
 		QDir(paths()[P_Translations]).removeRecursively();
 		copyPath(QDir(":data/locale").absolutePath(), paths()[P_Translations]);
-		settings.setValue("version", 5);
+		settings.setValue("version", 8);
 	}
 }
 

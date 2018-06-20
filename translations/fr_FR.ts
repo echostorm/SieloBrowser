@@ -188,29 +188,48 @@
 <context>
     <name>Sn::AboutDialog</name>
     <message>
-        <location filename="../Core/Widgets/AboutDialog.cpp" line="60"/>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="37"/>
         <source>About Sielo</source>
         <translation>À propos de Sielo</translation>
     </message>
     <message>
-        <location filename="../Core/Widgets/AboutDialog.cpp" line="85"/>
-        <source>&lt;p&gt;&lt;b&gt;Sielo version %1&lt;/b&gt;&lt;br /&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Version de Sielo %1&lt;/b&gt;&lt;br /&gt;</translation>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="64"/>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="82"/>
+        <source>Next</source>
+        <translation>Suivant</translation>
     </message>
     <message>
-        <location filename="../Core/Widgets/AboutDialog.cpp" line="86"/>
-        <source>&lt;b&gt;QtWebEngine version %1&lt;/b&gt;&lt;/p&gt;</source>
-        <translation>&lt;b&gt;Version de QtWebEngine %1&lt;/b&gt;&lt;/p&gt;</translation>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="65"/>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="83"/>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="110"/>
+        <source>Previous</source>
+        <translation>Précédent</translation>
     </message>
     <message>
-        <location filename="../Core/Widgets/AboutDialog.cpp" line="89"/>
-        <source>&lt;p&gt;&lt;b&gt;Main developer:&lt;/b&gt;&lt;br /&gt;%1 &amp;lt;%2&amp;gt;&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Développeur principal :&lt;/b&gt;&lt;br /&gt;%1 &amp;lt;%2&amp;gt;&lt;/p&gt;</translation>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="73"/>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="111"/>
+        <source>Our partners</source>
+        <translation>Nos partenaires</translation>
     </message>
     <message>
-        <location filename="../Core/Widgets/AboutDialog.cpp" line="91"/>
-        <source>&lt;p&gt;&lt;b&gt;Contributors:&lt;/b&gt;&lt;br /&gt;%1&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Contributeurs :&lt;/b&gt;&lt;br /&gt;%1&lt;/p&gt;</translation>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="93"/>
+        <source>What&apos;s Sielo</source>
+        <translation>Qu&apos;est-ce Sielo</translation>
+    </message>
+    <message>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="132"/>
+        <source>&lt;p&gt;&lt;b&gt;Sielo&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Sielo is a powerful web browser with a unique concept: tabs spaces.Sielo has many contribution and I would like to give special thanks&lt;br/&gt;to Hotaru for always being here, Echostorm for his awesome contribution,&lt;br/&gt;Kaktus for the design and all other contributors!&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2018 Victor DENIS&lt;br /&gt;&lt;a href=&quot;mailto:admin@feldrise.com&quot;&gt;admin@feldrise.com&lt;/a&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Sielo&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Sielo est un navigateur web puissant avec un concepte unique : Les espaces d&apos;ongltes. Sielo a de nombreuses contributions et je voudrais particulièrement remercier&lt;br/&gt;Hotaru pour toujours être présente, Echostorm pour ces superbes contributions,&lt;br/&gt;Kaktus pour le design et tous les autres contributeurs !&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2018 Victor DENIS&lt;br /&gt;&lt;a href=&quot;mailto:admin@feldrise.com&quot;&gt;admin@feldrise.com&lt;/a&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="148"/>
+        <source>&lt;b&gt;Bit-Studio.com&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Created in 2011, this concept aims to promote promising IT projects in order to help them take off.&lt;br/&gt;After a few years of operation, the project was put on hold. It was too much work for one man. In 2018, a team was formed and Bit-Studio was reborn from its ashes, stronger than ever.&lt;br/&gt;From then on, discover regularly, in preview, the mastodons of tomorrow on Bit-Studio.com.</source>
+        <translation>&lt;b&gt;Bit-Studio.com&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Créé en 2011, ce concept a pour objectif de promouvoir les projets informatiques prometteurs afin de les aider à décoller.&lt;br/&gt;Après quelques années d&apos;exploitation, le projet a été mis en pause. Cela représentait trop de travail pour un seul homme. En 2018, une équipe a été constituée et Bit-Studio est re-né de ses cendres, plus fort que jamais.&lt;br/&gt;Dès lors, découvrez régulièrement, en avant-première, les mastodontes de demain sur Bit-Studio.com.</translation>
+    </message>
+    <message>
+        <location filename="../Core/Widgets/AboutDialog.cpp" line="157"/>
+        <source>&lt;b&gt;Le Monde Du PC&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;&quot;Le Monde Du PC&quot;, put online in September 2017, is a site that aims to share our knowledge so that, for example, some subjects in computing are not only understood by those who master them. Today, the team is complete and a 2.0 version will normally be released in September.</source>
+        <translation>&lt;b&gt;Le Monde Du PC&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;&quot;Le Monde Du PC&quot;, mis en ligne en septembre 2017, est un site qui a pour but de partager nos connaissances pour que, par exemple, certains sujet dans l&apos;informatique ne soit pas compris uniqement par ceux qui les maitrisent. Aujourd&apos;hui, l&apos;équipe est au complet et une version 2.0 va normalement sortir en septembre.</translation>
     </message>
 </context>
 <context>
@@ -806,57 +825,57 @@
         <translation>Tous les autres favoris</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="57"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="59"/>
         <source>Add New Bookmark</source>
         <translation>Ajouter un favoris</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="62"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="64"/>
         <source>Choose name and location of this bookmark.</source>
         <translation>Choisi un nom et une place pour ce favoris.</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="101"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="103"/>
         <source>Bookmark All Tabs</source>
         <translation>Mettre tous les onglets en favoris</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="106"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="108"/>
         <source>Choose folder for bookmarks:</source>
         <translation>Choisi un dossier pour les favoris:</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="140"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="142"/>
         <source>Edit Bookmark</source>
         <translation>Modifier le favoris</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="153"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="155"/>
         <source>Title:</source>
         <translation>Titre :</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="156"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="158"/>
         <source>Address:</source>
         <translation>Adresse :</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="157"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="159"/>
         <source>Keyword:</source>
         <translation>Mot clé:</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="163"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="165"/>
         <source>Description:</source>
         <translation>Description:</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="256"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="258"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="257"/>
+        <location filename="../Core/Bookmarks/BookmarksUtils.cpp" line="259"/>
         <source>Are you sure you want to open all bookmarks from &apos;%1&apos; folder in tabs?</source>
         <translation>Etes vous sur de vouloir ouvrir tous les favoris du dossier %1 ?</translation>
     </message>
@@ -1845,53 +1864,53 @@
 <context>
     <name>Sn::HistoryMenu</name>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="51"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="52"/>
         <source>Hi&amp;story</source>
         <translation>Hi&amp;storique</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="53"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="54"/>
         <source>&amp;Back</source>
         <translation>&amp;Retour</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="55"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="56"/>
         <source>&amp;Forward</source>
         <translation>&amp;Suivant</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="57"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="58"/>
         <source>&amp;Home</source>
         <translation>&amp;Accueil</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="60"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="61"/>
         <source>Show &amp;All History</source>
         <translation>Afficher &amp;tout l&apos;historique</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="66"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="67"/>
         <source>Most Visited</source>
         <translation>Plus visités</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="67"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="68"/>
         <source>Closed Tabs</source>
         <translation>Onglets recemment fermé</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="180"/>
-        <location filename="../Core/History/HistoryMenu.cpp" line="205"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="179"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="204"/>
         <source>Empty</source>
         <translation>Vide</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="209"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="208"/>
         <source>Restore All Closed Tabs</source>
         <translation>Réouvrir tout les onglets fermés</translation>
     </message>
     <message>
-        <location filename="../Core/History/HistoryMenu.cpp" line="210"/>
+        <location filename="../Core/History/HistoryMenu.cpp" line="209"/>
         <source>Clear list</source>
         <translation>Vider la liste</translation>
     </message>
@@ -2325,6 +2344,66 @@
     </message>
 </context>
 <context>
+    <name>Sn::MaquetteGridManager</name>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="454"/>
+        <source>Add MaquetteGrid</source>
+        <translation>Ajouter une maquette</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="455"/>
+        <source>Add MaquetteGrid From Current Session</source>
+        <translation>Ajoute la maquette de la session actuelle</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="456"/>
+        <source>Delete MaquetteGrid</source>
+        <translation>Supprimer la maquette</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="475"/>
+        <source>Title:</source>
+        <translation>Titre :</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="477"/>
+        <source>Url:</source>
+        <translation>Url:</translation>
+    </message>
+</context>
+<context>
+    <name>Sn::MaquetteGridMenu</name>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridMenu.cpp" line="40"/>
+        <source>&amp;MaquetteGrid</source>
+        <translation>&amp;Maquette</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridMenu.cpp" line="42"/>
+        <source>Open MaquetteGrid Manager</source>
+        <translation>Ouvrire le gestionnaire de maquette</translation>
+    </message>
+</context>
+<context>
+    <name>Sn::MaquetteGridTabsList</name>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="52"/>
+        <source>X</source>
+        <translation>X</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="56"/>
+        <source>+</source>
+        <translation>+</translation>
+    </message>
+    <message>
+        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="107"/>
+        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="109"/>
+        <source>New Tab</source>
+        <translation>Nouvel onglet</translation>
+    </message>
+</context>
+<context>
     <name>Sn::MasterPasswordDialog</name>
     <message>
         <location filename="../Core/Password/MasterPasswordDialog.cpp" line="91"/>
@@ -2408,66 +2487,6 @@
         <location filename="../Core/Password/MasterPasswordDialog.cpp" line="252"/>
         <source>&lt;b&gt;Note:&lt;/b&gt; The Master Password is not resettable. Do not forget it, please.</source>
         <translation>&lt;b&gt;Note :&lt;/b&gt; Le Mot de Passe Maître n&apos;est pas réinitialisable. Ne l&apos;oubliez pas, s&apos;il vous plaît.</translation>
-    </message>
-</context>
-<context>
-    <name>Sn::MockupsManager</name>
-    <message>
-        <location filename="../Core/Mockup/MockupsManager.cpp" line="454"/>
-        <source>Add Mockup</source>
-        <translation>Ajouter une maquette</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsManager.cpp" line="455"/>
-        <source>Add Mockup From Current Session</source>
-        <translation>Ajouter une maquette depuis la session actuelle</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsManager.cpp" line="456"/>
-        <source>Delete Mockup</source>
-        <translation>Suprimmer la maquette</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsManager.cpp" line="475"/>
-        <source>Title:</source>
-        <translation>Titre :</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsManager.cpp" line="477"/>
-        <source>Url:</source>
-        <translation>Url:</translation>
-    </message>
-</context>
-<context>
-    <name>Sn::MockupsMenu</name>
-    <message>
-        <location filename="../Core/Mockup/MockupsMenu.cpp" line="40"/>
-        <source>&amp;Mockups</source>
-        <translation>&amp;Maquettes</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsMenu.cpp" line="42"/>
-        <source>Open Mockups Manager</source>
-        <translation>Ouvrir la gestionnaire de maquettes</translation>
-    </message>
-</context>
-<context>
-    <name>Sn::MockupsTabsList</name>
-    <message>
-        <location filename="../Core/Mockup/MockupsTabsList.cpp" line="52"/>
-        <source>X</source>
-        <translation>X</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsTabsList.cpp" line="56"/>
-        <source>+</source>
-        <translation>+</translation>
-    </message>
-    <message>
-        <location filename="../Core/Mockup/MockupsTabsList.cpp" line="107"/>
-        <location filename="../Core/Mockup/MockupsTabsList.cpp" line="109"/>
-        <source>New Tab</source>
-        <translation>Nouvel onglet</translation>
     </message>
 </context>
 <context>
@@ -3138,162 +3157,162 @@
 <context>
     <name>Sn::WebView</name>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="200"/>
+        <location filename="../Core/Web/WebView.cpp" line="203"/>
         <source>Empty page</source>
         <translation>Page vide</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="743"/>
+        <location filename="../Core/Web/WebView.cpp" line="751"/>
         <source>No suggestions</source>
         <translation>Pas de suggestions</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="779"/>
+        <location filename="../Core/Web/WebView.cpp" line="787"/>
         <source>&amp;Back</source>
         <translation>&amp;Retour</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="782"/>
+        <location filename="../Core/Web/WebView.cpp" line="790"/>
         <source>&amp;Forward</source>
         <translation>&amp;Flèche</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="790"/>
+        <location filename="../Core/Web/WebView.cpp" line="798"/>
         <source>Book&amp;mark page</source>
         <translation>&amp;Marquepage page</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="791"/>
+        <location filename="../Core/Web/WebView.cpp" line="799"/>
         <source>&amp;Save page as...</source>
         <translation>Enregi&amp;strer la page sous …</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="792"/>
+        <location filename="../Core/Web/WebView.cpp" line="800"/>
         <source>&amp;Copy page link</source>
         <translation>&amp;Copier le lien de la page</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="796"/>
+        <location filename="../Core/Web/WebView.cpp" line="804"/>
         <source>Select &amp;all</source>
         <translation>Tout &amp;sélectionner</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="811"/>
+        <location filename="../Core/Web/WebView.cpp" line="819"/>
         <source>Open link in new &amp;window</source>
         <translation>Ouvrir le lien dans une nouvelle &amp;fenêtre</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="818"/>
+        <location filename="../Core/Web/WebView.cpp" line="826"/>
         <source>B&amp;ookmark link</source>
         <translation>Aj&amp;outer un signet</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="819"/>
+        <location filename="../Core/Web/WebView.cpp" line="827"/>
         <source>&amp;Save link as...</source>
         <translation>Engeri&amp;strer le lien sous …</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="820"/>
+        <location filename="../Core/Web/WebView.cpp" line="828"/>
         <source>&amp;Copy link address</source>
         <translation>&amp;Copier l&apos;adresse du lien</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="831"/>
+        <location filename="../Core/Web/WebView.cpp" line="839"/>
         <source>Show i&amp;mage</source>
         <translation>Afficher l&apos;i&amp;mage</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="832"/>
+        <location filename="../Core/Web/WebView.cpp" line="840"/>
         <source>Copy image</source>
         <translation>Copier l&apos;image</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="833"/>
+        <location filename="../Core/Web/WebView.cpp" line="841"/>
         <source>Copy image ad&amp;dress</source>
         <translation>Copier l&apos;ad&amp;dresse de l&apos;image</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="837"/>
+        <location filename="../Core/Web/WebView.cpp" line="845"/>
         <source>&amp;Save image as...</source>
         <translation>Enregi&amp;strer l&apos;image sous …</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="858"/>
+        <location filename="../Core/Web/WebView.cpp" line="866"/>
         <source>Dictionary</source>
         <translation>Dictionnaire</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="871"/>
+        <location filename="../Core/Web/WebView.cpp" line="879"/>
         <source>Go to &amp;web address</source>
         <translation>Aller à l&apos;adresse &amp;web</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="888"/>
+        <location filename="../Core/Web/WebView.cpp" line="896"/>
         <source>&amp;Play</source>
         <translation>&amp;Jouer</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="888"/>
+        <location filename="../Core/Web/WebView.cpp" line="896"/>
         <source>&amp;Pause</source>
         <translation>&amp;Pause</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="889"/>
+        <location filename="../Core/Web/WebView.cpp" line="897"/>
         <source>Un&amp;mute</source>
         <translation>Ac&amp;tiver le son</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="889"/>
+        <location filename="../Core/Web/WebView.cpp" line="897"/>
         <source>&amp;Mute</source>
         <translation>Désac&amp;tiver le son</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="893"/>
+        <location filename="../Core/Web/WebView.cpp" line="901"/>
         <source>&amp;Copy media address</source>
         <translation>&amp;Copier l&apos;adresse du média</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="894"/>
+        <location filename="../Core/Web/WebView.cpp" line="902"/>
         <source>Save media to &amp;disk</source>
         <translation>Enregistrer le médié sur le &amp;disque</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="900"/>
+        <location filename="../Core/Web/WebView.cpp" line="908"/>
         <source>&amp;Undo</source>
         <translation>&amp;Retour</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="906"/>
+        <location filename="../Core/Web/WebView.cpp" line="914"/>
         <source>&amp;Redo</source>
         <translation>Ann&amp;uler retour</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="912"/>
+        <location filename="../Core/Web/WebView.cpp" line="920"/>
         <source>&amp;Cut</source>
         <translation>Co&amp;uper</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="918"/>
+        <location filename="../Core/Web/WebView.cpp" line="926"/>
         <source>&amp;Copy</source>
         <translation>&amp;Copier</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="924"/>
+        <location filename="../Core/Web/WebView.cpp" line="932"/>
         <source>&amp;Paste</source>
         <translation>Col&amp;ler</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="930"/>
+        <location filename="../Core/Web/WebView.cpp" line="938"/>
         <source>Select All</source>
         <translation>Tout sélectionner</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="936"/>
+        <location filename="../Core/Web/WebView.cpp" line="944"/>
         <source>&amp;Reload</source>
         <translation>&amp;Recharger</translation>
     </message>
     <message>
-        <location filename="../Core/Web/WebView.cpp" line="940"/>
+        <location filename="../Core/Web/WebView.cpp" line="948"/>
         <source>S&amp;top</source>
         <translation>S&amp;topper</translation>
     </message>
