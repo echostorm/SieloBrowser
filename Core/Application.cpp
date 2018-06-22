@@ -28,6 +28,7 @@
 #include <QDir>
 
 #include <QStyle>
+#include <QGraphicsBlurEffect>
 
 #include <QTranslator>
 #include <QLibraryInfo>
@@ -122,8 +123,6 @@ QByteArray Application::readAllFileByteContents(const QString& filename)
 		const QByteArray byteArray{file.readAll()};
 
 		file.close();
-
-		std::string str = byteArray;
 
 		return byteArray;
 	}
@@ -444,7 +443,7 @@ void Application::loadThemesSettings()
 	// Check if the theme existe
 	if (themeInfo.exists()) {
 		// Check default theme version and update it if needed
-		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 33) {
+		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 34) {
 			if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 11) {
 				QString defaultThemePath{paths()[Application::P_Themes]};
 
@@ -467,7 +466,7 @@ void Application::loadThemesSettings()
 			loadThemeFromResources("firefox-like-light", false);
 			loadThemeFromResources("firefox-like-dark", false);
 			loadThemeFromResources("sielo-default", false);
-			settings.setValue("Themes/defaultThemeVersion", 33);
+			settings.setValue("Themes/defaultThemeVersion", 34);
 		}
 
 		loadTheme(settings.value("Themes/currentTheme", QLatin1String("sielo-default")).toString(),
@@ -478,7 +477,7 @@ void Application::loadThemesSettings()
 		loadThemeFromResources("firefox-like-light", false);
 		loadThemeFromResources("firefox-like-dark", false);
 		loadThemeFromResources();
-		settings.setValue("Themes/defaultThemeVersion", 33);
+		settings.setValue("Themes/defaultThemeVersion", 35);
 	}
 }
 
@@ -487,10 +486,10 @@ void Application::loadTranslationSettings()
 	QSettings settings{};
 	settings.beginGroup("Language");
 
-	if (settings.value("version", 0).toInt() < 8) {
+	if (settings.value("version", 0).toInt() < 11) {
 		QDir(paths()[P_Translations]).removeRecursively();
 		copyPath(QDir(":data/locale").absolutePath(), paths()[P_Translations]);
-		settings.setValue("version", 8);
+		settings.setValue("version", 11);
 	}
 }
 
@@ -1170,8 +1169,25 @@ QString Application::parseSSS(QString& sss, const QString& relativePath, const Q
 	sss.replace("sproperty", "qproperty");
 	sss.replace("slineargradient", "qlineargradient");
 
+	// Replace sbackground with a blured background 
+	sss = parseSSSBackground(sss, relativePath);
+
 	// Replace theme colors to user colors
 	sss = parseSSSColor(sss, lightness);
+
+	return sss;
+}
+
+QString Application::parseSSSBackground(QString& sss, const QString& relativePath)
+{
+	QString bluredBackgroundPath = getBlurredBackgroundPath("images/background.png", 15);
+
+	if (bluredBackgroundPath.isEmpty())
+		sss.replace(RegExp(";\\s*\\background\\s*\\:\\s*\\sbackground\\s*\\;"), "");
+	else
+		sss.replace("sbackground()", "url(" + bluredBackgroundPath + ")");
+
+	std::string strSss = sss.toStdString();
 
 	return sss;
 }
@@ -1207,6 +1223,93 @@ QString Application::parseSSSColor(QString& sss, const QString& lightness)
 	sss.replace("$ulightness", lightness);
 
 	return sss;
+}
+
+QString Application::getBlurredBackgroundPath(const QString& defaultBackground, int radius)
+{
+	QSettings settings{};
+
+	QString backgroundPath = settings.value(QLatin1String("Settings/backgroundPath"), defaultBackground).toString();
+
+	if (!QFile::exists(backgroundPath))
+		return QString();
+
+	QImage backgroundImage{ backgroundPath };
+	QPixmap output = QPixmap::fromImage(blurImage(backgroundImage, backgroundImage.rect(), 10));
+	
+	QFile file{ paths()[Application::P_Themes] + QLatin1String("/bluredBackground.png") };
+	file.open(QIODevice::WriteOnly);
+	output.save(&file, "PNG");
+
+	return file.fileName();
+}
+
+QImage Application::blurImage(const QImage& image, const QRect& rect, int radius, bool alphaOnly)
+{
+	int tab[] = { 14, 10, 8, 6, 5, 5, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2 };
+	int alpha = (radius < 1) ? 16 : (radius > 17) ? 1 : tab[radius - 1];
+
+	QImage result = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+	int r1 = rect.top();
+	int r2 = rect.bottom();
+	int c1 = rect.left();
+	int c2 = rect.right();
+
+	int bpl = result.bytesPerLine();
+	int rgba[4];
+	unsigned char* p;
+
+	int i1 = 0;
+	int i2 = 3;
+
+	if (alphaOnly)
+		i1 = i2 = (QSysInfo::ByteOrder == QSysInfo::BigEndian ? 0 : 3);
+
+	for (int col = c1; col <= c2; col++) {
+		p = result.scanLine(r1) + col * 4;
+		for (int i = i1; i <= i2; i++)
+			rgba[i] = p[i] << 4;
+
+		p += bpl;
+		for (int j = r1; j < r2; j++, p += bpl)
+			for (int i = i1; i <= i2; i++)
+				p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
+	}
+
+	for (int row = r1; row <= r2; row++) {
+		p = result.scanLine(row) + c1 * 4;
+		for (int i = i1; i <= i2; i++)
+			rgba[i] = p[i] << 4;
+
+		p += 4;
+		for (int j = c1; j < c2; j++, p += 4)
+			for (int i = i1; i <= i2; i++)
+				p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
+	}
+
+	for (int col = c1; col <= c2; col++) {
+		p = result.scanLine(r2) + col * 4;
+		for (int i = i1; i <= i2; i++)
+			rgba[i] = p[i] << 4;
+
+		p -= bpl;
+		for (int j = r1; j < r2; j++, p -= bpl)
+			for (int i = i1; i <= i2; i++)
+				p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
+	}
+
+	for (int row = r1; row <= r2; row++) {
+		p = result.scanLine(row) + c2 * 4;
+		for (int i = i1; i <= i2; i++)
+			rgba[i] = p[i] << 4;
+
+		p -= 4;
+		for (int j = c1; j < c2; j++, p -= 4)
+			for (int i = i1; i <= i2; i++)
+				p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
+	}
+
+	return result;
 }
 
 void Application::loadThemeFromResources(QString name, bool loadAtEnd)

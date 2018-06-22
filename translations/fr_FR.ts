@@ -218,8 +218,8 @@
     </message>
     <message>
         <location filename="../Core/Widgets/AboutDialog.cpp" line="132"/>
-        <source>&lt;p&gt;&lt;b&gt;Sielo&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Sielo is a powerful web browser with a unique concept: tabs spaces.Sielo has many contribution and I would like to give special thanks&lt;br/&gt;to Hotaru for always being here, Echostorm for his awesome contribution,&lt;br/&gt;Kaktus for the design and all other contributors!&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2018 Victor DENIS&lt;br /&gt;&lt;a href=&quot;mailto:admin@feldrise.com&quot;&gt;admin@feldrise.com&lt;/a&gt;&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Sielo&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Sielo est un navigateur web puissant avec un concepte unique : Les espaces d&apos;ongltes. Sielo a de nombreuses contributions et je voudrais particulièrement remercier&lt;br/&gt;Hotaru pour toujours être présente, Echostorm pour ces superbes contributions,&lt;br/&gt;Kaktus pour le design et tous les autres contributeurs !&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2018 Victor DENIS&lt;br /&gt;&lt;a href=&quot;mailto:admin@feldrise.com&quot;&gt;admin@feldrise.com&lt;/a&gt;&lt;/p&gt;</translation>
+        <source>&lt;p&gt;&lt;b&gt;Sielo (version: %1, WebEngine: %2)&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Sielo is a powerful web browser with a unique concept: tabs spaces.Sielo has many contribution and I would like to give special thanks&lt;br/&gt;to Hotaru for always being here, Echostorm for his awesome contribution,&lt;br/&gt;Kaktus for the design and all other contributors!&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2018 Victor DENIS&lt;br /&gt;&lt;a href=&quot;mailto:admin@feldrise.com&quot;&gt;admin@feldrise.com&lt;/a&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Sielo (version: %1; WebEngine %2)&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;Sielo est un navigateur web puissant avec un concepte unique : Les espaces d&apos;ongltes. Sielo a de nombreuses contributions et je voudrais particulièrement remercier&lt;br/&gt;Hotaru pour toujours être présente, Echostorm pour ces superbes contributions,&lt;br/&gt;Kaktus pour le design et tous les autres contributeurs !&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2018 Victor DENIS&lt;br /&gt;&lt;a href=&quot;mailto:admin@feldrise.com&quot;&gt;admin@feldrise.com&lt;/a&gt;&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../Core/Widgets/AboutDialog.cpp" line="148"/>
@@ -488,7 +488,7 @@
     <message>
         <location filename="../Core/Widgets/Preferences/Appearance.cpp" line="477"/>
         <source>Fully load theme (otherwise it will only load theme&apos;s icons)</source>
-        <translation>Chargement complet du thème (sinon, il ne chargement que les icônes du thème)</translation>
+        <translation>Chargement complet du thème (sinon seul les icônes du thème seront chargés)</translation>
     </message>
     <message>
         <location filename="../Core/Widgets/Preferences/Appearance.cpp" line="478"/>
@@ -2347,13 +2347,13 @@
     <name>Sn::MaquetteGridManager</name>
     <message>
         <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="454"/>
-        <source>Add MaquetteGrid</source>
+        <source>Add Maquette Grid</source>
         <translation>Ajouter une maquette</translation>
     </message>
     <message>
         <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="455"/>
-        <source>Add MaquetteGrid From Current Session</source>
-        <translation>Ajoute la maquette de la session actuelle</translation>
+        <source>Add Maquette Grid From Current Session</source>
+        <translation>Ajouter la maquette de la session actuelle</translation>
     </message>
     <message>
         <location filename="../Core/MaquetteGrid/MaquetteGridManager.cpp" line="456"/>
@@ -2387,18 +2387,8 @@
 <context>
     <name>Sn::MaquetteGridTabsList</name>
     <message>
-        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="52"/>
-        <source>X</source>
-        <translation>X</translation>
-    </message>
-    <message>
-        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="56"/>
-        <source>+</source>
-        <translation>+</translation>
-    </message>
-    <message>
-        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="107"/>
-        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="109"/>
+        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="110"/>
+        <location filename="../Core/MaquetteGrid/MaquetteGridTabsList.cpp" line="112"/>
         <source>New Tab</source>
         <translation>Nouvel onglet</translation>
     </message>
@@ -3174,7 +3164,7 @@
     <message>
         <location filename="../Core/Web/WebView.cpp" line="790"/>
         <source>&amp;Forward</source>
-        <translation>&amp;Flèche</translation>
+        <translation>&amp;Suivant</translation>
     </message>
     <message>
         <location filename="../Core/Web/WebView.cpp" line="798"/>
