@@ -1,4 +1,4 @@
-/***********************************************************************************
+﻿/***********************************************************************************
 ** MIT License                                                                    **
 **                                                                                **
 ** Copyright (c) 2018 Victor DENIS (victordenis01@gmail.com)                      **
@@ -22,61 +22,27 @@
 ** SOFTWARE.                                                                      **
 ***********************************************************************************/
 
-#include "StatusBarMessage.hpp"
-
-#include <QStatusBar>
-
-#include "Web/Tab/TabbedWebView.hpp"
-#include "Web/WebView.hpp"
-
-#include "Widgets/TipLabel.hpp"
-
-#include "BrowserWindow.hpp"
-#include "Application.hpp"
+#include "BookmarksExporter.hpp"
 
 namespace Sn
 {
-StatusBarMessage::StatusBarMessage(Sn::BrowserWindow* window) :
-	m_window(window),
-	m_statusBarText(new TipLabel(window))
+BookmarksExporter::BookmarksExporter(QObject* parent)
+	: QObject(parent) { }
+
+BookmarksExporter::~BookmarksExporter() { }
+
+bool BookmarksExporter::error() const
 {
-	connect(m_window, SIGNAL(mouseOver), this, SLOT(sMouseOver));
+	return !m_error.isEmpty();
 }
 
-void StatusBarMessage::showMessage(const QString& message)
+QString BookmarksExporter::errorString() const
 {
-	if (m_window->statusBar()->isVisible()) {
-		m_window->statusBar()->showMessage(message.isRightToLeft() ? message : (QChar(0x202a) + message));
-	}
-	else if (Application::instance()->activeWindow() == m_window) {
-		WebView* view = m_window->webView();
-
-		m_statusBarText->setText(message);
-		m_statusBarText->setMaximumWidth(view->width());
-		m_statusBarText->resize(m_statusBarText->sizeHint());
-
-		QPoint position{0, view->height() - m_statusBarText->height()};
-		const QRect statusRect{QRect(view->mapToGlobal(QPoint(0, position.y())), m_statusBarText->size())};
-
-		if (statusRect.contains(QCursor::pos()))
-			position.setY(position.y() - m_statusBarText->height());
-
-		m_statusBarText->move(view->mapToGlobal(position));
-		m_statusBarText->show(view);
-	}
+	return m_error;
 }
 
-void StatusBarMessage::clearMessage()
+void BookmarksExporter::setError(const QString& error)
 {
-	if (m_window->statusBar()->isVisible())
-		m_window->statusBar()->showMessage(QString());
-	else
-		m_statusBarText->hideDelayed();
+	m_error = error;
 }
-
-void StatusBarMessage::sMouseOver(bool arg)
-{
-	if (!arg) clearMessage();
-}
-
 }

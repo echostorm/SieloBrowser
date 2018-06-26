@@ -1,4 +1,4 @@
-/***********************************************************************************
+﻿/***********************************************************************************
 ** MIT License                                                                    **
 **                                                                                **
 ** Copyright (c) 2018 Victor DENIS (victordenis01@gmail.com)                      **
@@ -22,61 +22,34 @@
 ** SOFTWARE.                                                                      **
 ***********************************************************************************/
 
-#include "StatusBarMessage.hpp"
+#pragma once
+#ifndef SIELOBROWSER_HTMLEXPORTER_HPP
+#define SIELOBROWSER_HTMLEXPORTER_HPP
 
-#include <QStatusBar>
+#include "BookmarksExporter.hpp"
 
-#include "Web/Tab/TabbedWebView.hpp"
-#include "Web/WebView.hpp"
-
-#include "Widgets/TipLabel.hpp"
-
-#include "BrowserWindow.hpp"
-#include "Application.hpp"
+#include <QTextStream>
 
 namespace Sn
 {
-StatusBarMessage::StatusBarMessage(Sn::BrowserWindow* window) :
-	m_window(window),
-	m_statusBarText(new TipLabel(window))
-{
-	connect(m_window, SIGNAL(mouseOver), this, SLOT(sMouseOver));
+class BookmarkItem;
+
+class HtmlExporter: public BookmarksExporter {
+Q_OBJECT
+
+public:
+	HtmlExporter(QObject* parent = nullptr);
+	~HtmlExporter();
+
+	QString name() const;
+	QString getPath(QWidget* parent);
+	bool exportBookmarks(BookmarkItem* root);
+
+private:
+	void writeBookmark(BookmarkItem* item, QTextStream& stream, int level);
+
+	QString m_path{};
+};
 }
 
-void StatusBarMessage::showMessage(const QString& message)
-{
-	if (m_window->statusBar()->isVisible()) {
-		m_window->statusBar()->showMessage(message.isRightToLeft() ? message : (QChar(0x202a) + message));
-	}
-	else if (Application::instance()->activeWindow() == m_window) {
-		WebView* view = m_window->webView();
-
-		m_statusBarText->setText(message);
-		m_statusBarText->setMaximumWidth(view->width());
-		m_statusBarText->resize(m_statusBarText->sizeHint());
-
-		QPoint position{0, view->height() - m_statusBarText->height()};
-		const QRect statusRect{QRect(view->mapToGlobal(QPoint(0, position.y())), m_statusBarText->size())};
-
-		if (statusRect.contains(QCursor::pos()))
-			position.setY(position.y() - m_statusBarText->height());
-
-		m_statusBarText->move(view->mapToGlobal(position));
-		m_statusBarText->show(view);
-	}
-}
-
-void StatusBarMessage::clearMessage()
-{
-	if (m_window->statusBar()->isVisible())
-		m_window->statusBar()->showMessage(QString());
-	else
-		m_statusBarText->hideDelayed();
-}
-
-void StatusBarMessage::sMouseOver(bool arg)
-{
-	if (!arg) clearMessage();
-}
-
-}
+#endif //SIELOBROWSER_HTMLEXPORTER_HPP
