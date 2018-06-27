@@ -52,7 +52,7 @@ QString AppearancePage::colorString(QString id)
 	settings.beginGroup("Themes");
 
 	if (id.contains("main"))
-		returnColor = settings.value(QLatin1String("mainColor"), QColor(60, 60, 60)).value<QColor>();
+		returnColor = settings.value(QLatin1String("mainColor"), QColor(30, 30, 30)).value<QColor>();
 	else if (id.contains("second"))
 		returnColor = settings.value(QLatin1String("secondColor"), QColor(30, 30, 30)).value<QColor>();
 	else if (id.contains("accent"))
@@ -345,7 +345,7 @@ void AppearancePage::loadSettings()
 	m_tabsSpacesPaddingLabel->setText(tr("Tabs spaces padding (%1px)").arg(m_tabsSpacesPadding->value()));
 	m_repeatBackground->setChecked(settings.value(QLatin1String("repeatBackground"), false).toBool());
 	m_backgroundLocationEdit->setText(settings.value(QLatin1String("backgroundPath"), "").toString());
-	m_blurFilterRadius->setValue(settings.value(QLatin1String("backdropBlur"), 10).toInt());
+	m_blurFilterRadius->setValue(settings.value(QLatin1String("backdropBlur"), 100).toInt());
 
 	settings.endGroup();
 	settings.beginGroup("Themes");
