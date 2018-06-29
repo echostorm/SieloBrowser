@@ -57,8 +57,6 @@
 
 #include "Cookies/CookieJar.hpp"
 
-#include "3rdparty/Piwik/piwiktracker.h"
-
 #include "History/History.hpp"
 #include "Bookmarks/Bookmarks.hpp"
 #include "MaquetteGrid/MaquetteGrid.hpp"
@@ -85,7 +83,7 @@
 
 namespace Sn
 {
-QString Application::currentVersion = QString("1.15.08b");
+QString Application::currentVersion = QString("1.16.00");
 
 // Static member
 QList<QString> Application::paths()
@@ -174,14 +172,10 @@ Application::Application(int& argc, char** argv) :
 	m_networkManager(nullptr),
 	m_webProfile(nullptr)
 {
-	// the 3rd parameter is the site id
-	PiwikTracker *piwikTracker = new PiwikTracker(qApp, QUrl("https://sielo.app/analytics"), 1);
-	piwikTracker->sendVisit("SieloBrowser");
-
 	// Setting up settings environment
 	QCoreApplication::setOrganizationName(QLatin1String("Feldrise"));
 	QCoreApplication::setApplicationName(QLatin1String("Sielo"));
-	QCoreApplication::setApplicationVersion(QLatin1String("1.15.08"));
+	QCoreApplication::setApplicationVersion(QLatin1String("1.16.00"));
 
 	setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 	/*
@@ -199,6 +193,10 @@ Application::Application(int& argc, char** argv) :
 	QString family = QFontDatabase::applicationFontFamilies(id).at(0);
 	m_morpheusFont = QFont(family);
 	m_normalFont = font();*/
+
+	// the 3rd parameter is the site id
+	m_piwikTracker = new PiwikTracker(this, QUrl("https://sielo.app/analytics"), 1);
+	m_piwikTracker->sendVisit("launch");
 
 	// Check command line options with given arguments
 	QUrl startUrl{};
@@ -456,7 +454,7 @@ void Application::loadThemesSettings()
 	// Check if the theme existe
 	if (themeInfo.exists()) {
 		// Check default theme version and update it if needed
-		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 38) {
+		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 42) {
 			if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 11) {
 				QString defaultThemePath{paths()[Application::P_Themes]};
 
@@ -478,8 +476,11 @@ void Application::loadThemesSettings()
 
 			loadThemeFromResources("firefox-like-light", false);
 			loadThemeFromResources("firefox-like-dark", false);
+			loadThemeFromResources("sielo-flat", false);
+			loadThemeFromResources("round-theme", false);
+			loadThemeFromResources("ColorZilla", false);
 			loadThemeFromResources("sielo-default", false);
-			settings.setValue("Themes/defaultThemeVersion", 38);
+			settings.setValue("Themes/defaultThemeVersion", 42);
 		}
 
 		loadTheme(settings.value("Themes/currentTheme", QLatin1String("sielo-default")).toString(),
@@ -489,8 +490,11 @@ void Application::loadThemesSettings()
 	else {
 		loadThemeFromResources("firefox-like-light", false);
 		loadThemeFromResources("firefox-like-dark", false);
+		loadThemeFromResources("sielo-flat", false);
+		loadThemeFromResources("round-theme", false);
+		loadThemeFromResources("ColorZilla", false);
 		loadThemeFromResources();
-		settings.setValue("Themes/defaultThemeVersion", 38);
+		settings.setValue("Themes/defaultThemeVersion", 42);
 	}
 }
 
@@ -499,10 +503,10 @@ void Application::loadTranslationSettings()
 	QSettings settings{};
 	settings.beginGroup("Language");
 
-	if (settings.value("version", 0).toInt() < 12) {
+	if (settings.value("version", 0).toInt() < 13) {
 		QDir(paths()[P_Translations]).removeRecursively();
 		copyPath(QDir(":data/locale").absolutePath(), paths()[P_Translations]);
-		settings.setValue("version", 12);
+		settings.setValue("version", 13);
 	}
 }
 
@@ -764,6 +768,8 @@ void Application::postLaunch()
 
 	// Show the "getting started" page if it's the first time Sielo is launch
 	if (!settings.value("installed", false).toBool()) {
+		m_piwikTracker->sendEvent("installation", "installation", "installation", "new installation");
+
 		getWindow()->tabWidget()
 		           ->addView(QUrl("https://sielo.app/thanks.php"),
 		                     Application::NTT_CleanSelectedTabAtEnd);
@@ -1329,7 +1335,7 @@ QImage Application::blurImage(const QImage& image, const QRect& rect, int radius
 void Application::loadThemeFromResources(QString name, bool loadAtEnd)
 {
 	QString defaultThemePath{paths()[Application::P_Themes]};
-	QString defaultThemeDataPath{":data/themes/" + name};
+	QString defaultThemeDataPath{":/" + name + "/data/themes/" + name};
 
 	defaultThemePath += QLatin1Char('/') + name;
 
