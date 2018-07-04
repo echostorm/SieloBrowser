@@ -244,7 +244,7 @@ void WebView::load(const QUrl& url)
 
 void WebView::load(const LoadRequest& request)
 {
-	const QUrl requestUrl{request.url()};
+	QUrl requestUrl{request.url()};
 
 	if (requestUrl.isEmpty())
 		return;
@@ -260,14 +260,26 @@ void WebView::load(const LoadRequest& request)
 		return;
 	}
 
+
+
 	if (isUrlValide(requestUrl)) {
+		if (requestUrl.host() == "localhost")
+			requestUrl.setScheme("http");
+
+		loadRequest(requestUrl);
+		return;
+	}
+
+	if (requestUrl == QUrl("localhost")) {
+		requestUrl = QUrl("http://localhost/");
+
 		loadRequest(requestUrl);
 		return;
 	}
 
 	if (!requestUrl.isEmpty() && requestUrl.scheme().isEmpty() && !requestUrl.path().contains(QLatin1Char(' '))
 		&& !requestUrl.path().contains(QLatin1Char('.'))) {
-		QUrl url{QStringLiteral("http://") + requestUrl.path()};
+		QUrl url{QStringLiteral("https://") + requestUrl.path()};
 
 		if (url.isValid()) {
 			QHostInfo info{QHostInfo::fromName(url.path())};

@@ -83,7 +83,7 @@
 
 namespace Sn
 {
-QString Application::currentVersion = QString("1.16.01 closed-beta");
+QString Application::currentVersion = QString("1.16.07");
 
 // Static member
 QList<QString> Application::paths()
@@ -175,7 +175,7 @@ Application::Application(int& argc, char** argv) :
 	// Setting up settings environment
 	QCoreApplication::setOrganizationName(QLatin1String("Feldrise"));
 	QCoreApplication::setApplicationName(QLatin1String("Sielo"));
-	QCoreApplication::setApplicationVersion(QLatin1String("1.16.01"));
+	QCoreApplication::setApplicationVersion(QLatin1String("1.16.07"));
 
 	setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 	/*
@@ -503,10 +503,10 @@ void Application::loadTranslationSettings()
 	QSettings settings{};
 	settings.beginGroup("Language");
 
-	if (settings.value("version", 0).toInt() < 13) {
+	if (settings.value("version", 0).toInt() < 14) {
 		QDir(paths()[P_Translations]).removeRecursively();
 		copyPath(QDir(":data/locale").absolutePath(), paths()[P_Translations]);
-		settings.setValue("version", 13);
+		settings.setValue("version", 14);
 	}
 }
 
@@ -703,6 +703,8 @@ void Application::saveSettings()
 		m_history->clearHistory();
 	if (deleteCookies)
 		m_cookieJar->deleteAllCookies();
+
+	m_piwikTracker->sendEvent("exit", "exit", "exit", "exit application");
 }
 
 void Application::saveSession(bool saveForHome)
@@ -754,8 +756,6 @@ void Application::reloadUserStyleSheet()
 void Application::quitApplication()
 {
 	m_isClosing = true;
-
-	m_piwikTracker->sendEvent("exit", "exit", "exit", "exit application");
 
 	quit();
 }
@@ -962,6 +962,9 @@ void Application::startAfterCrash()
 
 void Application::connectDatabase()
 {
+	if (!QDir(paths()[Application::P_Data] + QLatin1String("/database")).exists())
+		QDir().mkpath(paths()[Application::P_Data] + QLatin1String("/database"));
+
 	// ndb params
 	ndb::connection_param params{};
 
