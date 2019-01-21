@@ -27,14 +27,13 @@
 #include <QWebEngineScript>
 #include <QWebEngineScriptCollection>
 
-#include <QSettings>
+#include <QSqlQuery>
 
 #include <QMessageBox>
 
-#include <ndb/query.hpp>
-#include <ndb/function.hpp>
-
 #include "Password/PasswordManager.hpp"
+
+#include "Utils/Settings.hpp"
 
 #include "Web/Scripts.hpp"
 #include "Web/WebPage.hpp"
@@ -125,7 +124,7 @@ AutoFill::AutoFill(QObject* parent) :
 
 void AutoFill::loadSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	m_isStoring = settings.value("Settings/savePasswordsOnSites", true).toBool();
 }
@@ -148,13 +147,15 @@ bool AutoFill::isStoringEnabled(const QUrl& url)
 	if (server.isEmpty())
 		server = url.toString();
 
-	auto ids = ndb::query<dbs::password>()
-			<< ((ndb::count(autofill_exceptions.id)) << (autofill_exceptions.server == server));
+	QSqlQuery query{SqlDatabase::instance()->database()};
+	query.prepare("SELECT count(id) FROM autofill_exceptions WHERE server=?");
+	query.addBindValue(server);
+	query.exec();
 
-	if (!ids.has_result())
+	if (!query.next()) 
 		return false;
 
-	return ids[0][0].get<qint64>() <= 0;
+	return query.value(0).toInt() <= 0;
 }
 
 void AutoFill::blockStoringForUrl(const QUrl& url)
@@ -164,7 +165,10 @@ void AutoFill::blockStoringForUrl(const QUrl& url)
 	if (server.isEmpty())
 		server = url.toString();
 
-	ndb::query<dbs::password>() + (autofill_exceptions.server = server);
+	QSqlQuery query{SqlDatabase::instance()->database()};
+	query.prepare("INSERT INTO autofill_exceptions (server) VALUES (?)");
+	query.addBindValue(server);
+	query.exec();
 }
 
 QVector<PasswordEntry> AutoFill::getFormData(const QUrl& url)

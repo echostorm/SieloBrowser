@@ -34,20 +34,17 @@
 #include <QLibraryInfo>
 
 #include <QProcess>
+#include <QThreadPool> 
 
 #include <QDesktopServices>
 #include <QFontDatabase>
 
 #include <QMessageBox>
 
-#include <QSettings>
-
 #include <QWebEngineSettings>
 #include <QWebEngineScript>
 #include <QWebEngineScriptCollection>
 #include <AdBlock/Manager.hpp>
-
-#include <ndb/option.hpp>
 
 #include "BrowserWindow.hpp"
 
@@ -63,10 +60,16 @@
 #include "MaquetteGrid/MaquetteGridManager.hpp"
 #include "Download/DownloadManager.hpp"
 
-#include "Utils/RegExp.hpp"
 #include "Database/SqlDatabase.hpp"
+#include "Database/ProfileManager.hpp"
+
+#include "Utils/RegExp.hpp"
 #include "Utils/CommandLineOption.hpp"
+#include "Utils/DataPaths.hpp"
 #include "Utils/Updater.hpp"
+#include "Utils/RestoreManager.hpp"
+#include "Utils/Settings.hpp"
+#include "Utils/SideBarManager.hpp"
 
 #include "Web/WebPage.hpp"
 #include "Web/Scripts.hpp"
@@ -78,32 +81,17 @@
 #include "Widgets/TitleBar.hpp"
 #include "Widgets/NavigationControlDialog.hpp"
 #include "Widgets/Tab/TabWidget.hpp"
+#include "Widgets/Tab/MainTabBar.hpp"
+#include "Widgets/Tab/TabBar.hpp"
 #include "Widgets/AddressBar/AddressBar.hpp"
 #include "Widgets/Preferences/Appearance.hpp"
+#include "Widgets/SideBar/SideBarInterface.hpp"
 
 namespace Sn
 {
-QString Application::currentVersion = QString("1.17.00 closed-beta");
+QString Application::currentVersion = QString("1.17.14");
 
 // Static member
-QList<QString> Application::paths()
-{
-	/* 
-	 * On Windows : P_Data = C:\Users\%userame%\AppData\Roaming\Feldrise\Sielo
-	 * On Linux : P_Data = /home/%username%/.local/share/feldrise/Sielo
-	 * On macOS : P_Data = Unknown
-	 */
-	QList<QString> paths{};
-
-	paths.append(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
-	paths.append(paths[Application::P_Data] + QLatin1String("/plugins"));
-	paths.append(paths[Application::P_Data] + QLatin1String("/themes"));
-	paths.append(paths[Application::P_Data] + QLatin1String("/locale"));
-	paths.append(paths[Application::P_Data] + QLatin1String("/maquette-grid"));
-
-	return paths;
-}
-
 Application *Application::instance()
 {
 	return dynamic_cast<Application*>(QCoreApplication::instance());
@@ -129,6 +117,47 @@ QByteArray Application::readAllFileByteContents(const QString& filename)
 	}
 
 	return QByteArray();
+}
+
+QString Application::getFileNameFromUrl(const QUrl &url)
+{
+	QString fileName{url.toString(QUrl::RemoveFragment | QUrl::RemoveQuery | QUrl::RemoveScheme | QUrl::RemovePort)};
+
+	if (fileName.endsWith(QLatin1Char('/'))) 
+		fileName = fileName.mid(0, fileName.length() - 1);
+
+	if (fileName.indexOf(QLatin1Char('/')) != -1) {
+		int pos{fileName.lastIndexOf(QLatin1Char('/'))};
+
+		fileName = fileName.mid(pos);
+		fileName.remove(QLatin1Char('/'));
+	}
+
+	fileName.replace(QLatin1Char('/'), QLatin1Char('-'));
+	fileName.remove(QLatin1Char('\\'));
+	fileName.remove(QLatin1Char(':'));
+	fileName.remove(QLatin1Char('*'));
+	fileName.remove(QLatin1Char('?'));
+	fileName.remove(QLatin1Char('"'));
+	fileName.remove(QLatin1Char('<'));
+	fileName.remove(QLatin1Char('>'));
+	fileName.remove(QLatin1Char('|'));
+
+	if (fileName.isEmpty()) {
+		fileName = url.host();
+
+		fileName.replace(QLatin1Char('/'), QLatin1Char('-'));
+		fileName.remove(QLatin1Char('\\'));
+		fileName.remove(QLatin1Char(':'));
+		fileName.remove(QLatin1Char('*'));
+		fileName.remove(QLatin1Char('?'));
+		fileName.remove(QLatin1Char('"'));
+		fileName.remove(QLatin1Char('<'));
+		fileName.remove(QLatin1Char('>'));
+		fileName.remove(QLatin1Char('|'));
+	}
+
+	return fileName;
 }
 
 QString Application::ensureUniqueFilename(const QString& name, const QString& appendFormat)
@@ -162,6 +191,27 @@ QString Application::ensureUniqueFilename(const QString& name, const QString& ap
 	return info.absoluteFilePath();
 }
 
+void Application::removeDirectory(const QString& directory)
+{
+	QDir dir{directory};
+
+	if (dir.exists()) {
+		const QFileInfoList list{dir.entryInfoList()};
+		QFileInfo info{};
+
+		for (int i{0}; i < list.size(); ++i) {
+			info = list[i];
+
+			if (info.isDir() && info.fileName() != QLatin1String(".") && info.fileName() != QLatin1String(".."))
+				Application::removeDirectory(info.absoluteFilePath());
+			else if (info.isFile())
+				QFile(info.absoluteFilePath()).remove();
+		}
+
+		dir.rmdir(directory);
+	}
+}
+
 // Constructor&  destructor
 Application::Application(int& argc, char** argv) :
 	SingleApplication(argc, argv, true),
@@ -173,11 +223,11 @@ Application::Application(int& argc, char** argv) :
 	m_webProfile(nullptr)
 {
 	// Setting up settings environment
-	QCoreApplication::setOrganizationName(QLatin1String("Feldrise"));
 	QCoreApplication::setApplicationName(QLatin1String("Sielo"));
-	QCoreApplication::setApplicationVersion(QLatin1String("1.17.00"));
+	QCoreApplication::setApplicationVersion(QLatin1String("1.17.14"));
 
 	setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+	setAttribute(Qt::AA_EnableHighDpiScaling);
 	/*
 		// QSQLITE database plugin is required
 		if (!QSqlDatabase::isDriverAvailable(QStringLiteral("QSQLITE"))) {
@@ -189,17 +239,14 @@ Application::Application(int& argc, char** argv) :
 		}
 	*/
 	// Loading fonts information
-	/*int id = QFontDatabase::addApplicationFont(":data/fonts/morpheus.ttf");
+	int id = QFontDatabase::addApplicationFont(":data/fonts/morpheus.ttf");
 	QString family = QFontDatabase::applicationFontFamilies(id).at(0);
 	m_morpheusFont = QFont(family);
-	m_normalFont = font();*/
-
-	// the 3rd parameter is the site id
-	m_piwikTracker = new PiwikTracker(this, QUrl("https://sielo.app/analytics"), 1);
-	m_piwikTracker->sendVisit("launch");
+	m_normalFont = font();
 
 	// Check command line options with given arguments
 	QUrl startUrl{};
+	QString startProfile{ };
 	QStringList messages;
 
 	bool newInstance{false};
@@ -208,8 +255,12 @@ Application::Application(int& argc, char** argv) :
 	if (argc > 1) {
 		CommandLineOption command{};
 
-		foreach (const CommandLineOption::ActionPair& pair, command.getActions()) {
+		foreach(const CommandLineOption::ActionPair& pair, command.getActions())
+		{
 			switch (pair.action) {
+			case Application::CL_StartWithProfile:
+				startProfile = pair.text;
+				break;
 			case Application::CL_NewTab:
 				messages.append(QLatin1String("ACTION:NewTab"));
 				m_postLaunchActions.append(OpenNewTab);
@@ -251,7 +302,8 @@ Application::Application(int& argc, char** argv) :
 	// Check is there is already an instance of Sielo running
 	if (isSecondary() && !newInstance && !privateBrowsing()) {
 		m_isClosing = true;
-		foreach (const QString& message, messages) {
+		foreach(const QString& message, messages)
+		{
 			sendMessage(message.toUtf8());
 		}
 
@@ -263,19 +315,27 @@ Application::Application(int& argc, char** argv) :
 	QDesktopServices::setUrlHandler("https", this, "addNewTab");
 	QDesktopServices::setUrlHandler("ftp", this, "addNewTab");
 
-	connectDatabase(); // connect ndb
+	ProfileManager::initConfigDir();
+	ProfileManager profileManager{};
+	profileManager.initCurrentProfile(startProfile);
 
-	m_plugins = new PluginProxy;
+	Settings::createSettings(DataPaths::currentProfilePath() + "/settings.ini");
+
+#ifndef QT_DEBUG
+	// the 3rd parameter is the site id
+	m_piwikTracker = new PiwikTracker(this, QUrl("https://sielo.app/analytics"), 1);
+	m_piwikTracker->sendVisit("launch");
+#endif 
 
 	// Setting up web and network objects
 	m_webProfile = privateBrowsing() ? new QWebEngineProfile(this) : QWebEngineProfile::defaultProfile();
 	connect(m_webProfile, &QWebEngineProfile::downloadRequested, this, &Application::downloadRequested);
 
-	loadSettings();
-	translateApplication();
-
 	m_networkManager = new NetworkManager(this);
 	m_autoFill = new AutoFill;
+
+	loadSettings();
+	translateApplication();
 
 	// Setup web channel with custom script (mainly for autofill)
 	QString webChannelScriptSrc = Scripts::webChannelDefautlScript();
@@ -290,9 +350,12 @@ Application::Application(int& argc, char** argv) :
 
 	m_webProfile->scripts()->insert(script);
 
+	m_plugins = new PluginProxy;
+	m_plugins->loadPlugins();
+
 	// Check if we start after a crash
 	if (!privateBrowsing()) {
-		QSettings settings{};
+		Settings settings{};
 
 		m_startingAfterCrash = settings.value(QLatin1String("isRunning"), false).toBool();
 		settings.setValue(QLatin1String("isRunning"), true);
@@ -304,16 +367,23 @@ Application::Application(int& argc, char** argv) :
 	// Create or restore window
 	BrowserWindow* window{createWindow(Application::WT_FirstAppWindow, startUrl)};
 
-	if ((isStartingAfterCrash() && afterCrashLaunch() == RestoreSession) ||
-		(afterLaunch() == RestoreSession || afterLaunch() == OpenSavedSession)) {
-		if (!(isStartingAfterCrash() && afterCrashLaunch() == Application::AfterLaunch::OpenHomePage)) {
-			m_restoreManager = new RestoreManager();
-			if (!m_restoreManager->isValid())
-				destroyRestoreManager();
-			else
-				QFile::remove(paths()[Application::P_Data] + QLatin1String("/pinnedtabs.dat"));
+	connect(this, SIGNAL(focusChanged(QWidget*,QWidget*)), this, SLOT(onFocusChanged()));
+
+	if (!privateBrowsing()) {
+		if (isStartingAfterCrash()) {
+			if (afterCrashLaunch() == RestoreSession)
+				m_restoreManager = new RestoreManager();
 		}
+		else if (afterLaunch() == RestoreSession || afterLaunch() == OpenSavedSession) {
+			m_restoreManager = new RestoreManager(afterLaunch() == OpenSavedSession);
+		}
+
+		if (m_restoreManager && !m_restoreManager->isValid()) 
+			destroyRestoreManager();
 	}
+
+	if (m_restoreManager)
+		restoreSession(window, m_restoreManager->restoreData());
 
 	// Check for update
 	Updater* updater{new Updater(window)};
@@ -328,6 +398,8 @@ Application::~Application()
 	if (m_windows.count() > 0)
 		saveSession();
 
+	QThreadPool::globalInstance()->waitForDone();
+
 	delete m_plugins;
 	delete m_cookieJar;
 	delete m_downloadManager;
@@ -335,7 +407,7 @@ Application::~Application()
 
 void Application::loadSettings()
 {
-	QSettings settings;
+	Settings settings;
 
 	// General Sielo settings
 	m_fullyLoadThemes = settings.value("Settings/fullyLoadThemes", true).toBool();
@@ -345,8 +417,21 @@ void Application::loadSettings()
 
 	m_networkManager->loadSettings();
 
+	// Check if the user have enable the witcher font
+	if (settings.value("Settings/useMorpheusFont", false).toBool()) {
+		QWebEngineSettings* webSettings = QWebEngineSettings::defaultSettings();
+
+		setFont(m_morpheusFont);
+		webSettings->setFontFamily(QWebEngineSettings::StandardFont, "Z003");
+		webSettings->setFontFamily(QWebEngineSettings::CursiveFont, "Z003");
+		webSettings->setFontFamily(QWebEngineSettings::FantasyFont, "Z003");
+		webSettings->setFontFamily(QWebEngineSettings::FixedFont, "Z003");
+		webSettings->setFontFamily(QWebEngineSettings::SansSerifFont, "Z003");
+		webSettings->setFontFamily(QWebEngineSettings::SerifFont, "Z003");
+	}
+
 	// Load specific settings for all windows
-	foreach (BrowserWindow* window, m_windows) window->loadSettings();
+	foreach(BrowserWindow* window, m_windows) window->loadSettings();
 
 	// Load settings for password
 	if (m_autoFill)
@@ -355,12 +440,13 @@ void Application::loadSettings()
 	loadWebSettings();
 	loadApplicationSettings();
 	loadThemesSettings();
+	loadPluginsSettings();
 	loadTranslationSettings();
 }
 
 void Application::loadWebSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	// load web settings
 	QWebEngineSettings* webSettings = m_webProfile->settings();
@@ -370,13 +456,13 @@ void Application::loadWebSettings()
 	webSettings->setAttribute(QWebEngineSettings::PluginsEnabled, settings.value("allowPlugins", true).toBool());
 	webSettings->setAttribute(QWebEngineSettings::JavascriptEnabled, settings.value("allowJavaScript", true).toBool());
 	webSettings->setAttribute(QWebEngineSettings::LinksIncludedInFocusChain,
-	                          settings.value("includeLinkInFocusChain", false).toBool());
+							  settings.value("includeLinkInFocusChain", false).toBool());
 	webSettings->setAttribute(QWebEngineSettings::XSSAuditingEnabled, settings.value("XSSAuditing", false).toBool());
 	webSettings
 		->setAttribute(QWebEngineSettings::ScrollAnimatorEnabled,
-		               settings.value("animateScrolling", true).toBool());
+					   settings.value("animateScrolling", true).toBool());
 	webSettings->setAttribute(QWebEngineSettings::SpatialNavigationEnabled,
-	                          settings.value("spatialNavigation", false).toBool());
+							  settings.value("spatialNavigation", false).toBool());
 	webSettings->setAttribute(QWebEngineSettings::HyperlinkAuditingEnabled, false);
 	webSettings->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
 	webSettings->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
@@ -387,7 +473,7 @@ void Application::loadWebSettings()
 
 	QString defaultUserAgent = webProfile->httpUserAgent();
 	defaultUserAgent.replace(QRegularExpression(QStringLiteral("QtWebEngine/[^\\s]+")),
-		QStringLiteral("Sielo/%1").arg(QCoreApplication::applicationVersion()));
+							 QStringLiteral("Sielo/%1").arg(QCoreApplication::applicationVersion()));
 	webProfile->setHttpUserAgent(defaultUserAgent);
 
 
@@ -396,6 +482,7 @@ void Application::loadWebSettings()
 	webProfile->setCachePath(settings.value("cachePath", webProfile->cachePath()).toString());
 
 	webProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
+	webProfile->setPersistentStoragePath(DataPaths::currentProfilePath());
 
 	settings.endGroup();
 
@@ -408,47 +495,66 @@ void Application::loadWebSettings()
 
 void Application::loadApplicationSettings()
 {
-	QSettings settings{};
+	Settings settings{};
+	QSettings oldSettings{"Feldrise", "Sielo"};
 
 	// Check the current version number of Sielo, and make setting update if needed
 	//TODO: improve this with a switch
-	if (settings.value("versionNumber", 0).toInt() < 14) {
-		settings.setValue("installed", false);
-		if (settings.value("versionNumber", 0).toInt() < 12) {
-			if (settings.value("versionNumber", 0).toInt() < 11) {
-				// Update with new bookmarks
-				QString directory{ Application::instance()->paths()[Application::P_Data] };
-				QFile::remove(directory
-					+ QLatin1String("/bookmarks.xbel"));
-				QFile::copy(QLatin1String(":data/bookmarks.xbel"), directory
-					+ QLatin1String("/bookmarks.xbel"));
-				QFile::setPermissions(directory
-					+ QLatin1String("/bookmarks.xbel"),
-					QFileDevice::ReadUser | QFileDevice::WriteUser);
-			}
+	int oldSettingsVersionNumber = oldSettings.value("versionNumber", 14).toInt();
+	if (oldSettingsVersionNumber < 15) {
+		if (oldSettingsVersionNumber < 14) {
+			oldSettings.setValue("installed", false);
+			if (oldSettingsVersionNumber < 12) {
+				if (oldSettingsVersionNumber < 11) {
+					// Update with new bookmarks
+					QString directory{DataPaths::currentProfilePath()};
+					QFile::remove(directory
+								  + QLatin1String("/bookmarks.xbel"));
+					QFile::copy(QLatin1String(":data/bookmarks.xbel"), directory
+								+ QLatin1String("/bookmarks.xbel"));
+					QFile::setPermissions(directory
+										  + QLatin1String("/bookmarks.xbel"),
+										  QFileDevice::ReadUser | QFileDevice::WriteUser);
+				}
 
-			// Update home page to use last version of doosearch
-			settings.setValue("Web-Settings/homePage", "https://doosearch.sielo.app/");
-			settings.setValue("Web-Settings/urlOnNewTab", "https://doosearch.sielo.app/");
+				// Update home page to use last version of doosearch
+				oldSettings.setValue("Web-Settings/homePage", "https://doosearch.sielo.app/");
+				oldSettings.setValue("Web-Settings/urlOnNewTab", "https://doosearch.sielo.app/");
 
-			foreach(BrowserWindow* window, m_windows) {
-				window->loadSettings();
-				for (int i{ 0 }; i < window->tabWidgetsCount(); ++i) {
-					window->tabWidget(i)->setHomeUrl("https://doosearch.sielo.app");
+				foreach(BrowserWindow* window, m_windows)
+				{
+					window->loadSettings();
+					for (int i{0}; i < window->tabsSpaceSplitter()->count(); ++i) {
+						window->tabWidget(i)->setHomeUrl("https://doosearch.sielo.app");
+					}
 				}
 			}
 		}
-		settings.setValue("versionNumber", 14);
+
+		oldSettings.setValue("versionNumber", 15);
+		updateToProfiles();
+	}
+
+	if (settings.value("versionNumber", 0).toInt() < 16) {
+		QString directory{DataPaths::currentProfilePath()};
+
+		if (!QDir(directory + "/maquette-grid").exists())
+			QDir(directory).mkdir("maquette-grid");
+
+		QFile::copy(QLatin1String(":data/default-maquettegrid.dat"), directory + QLatin1String("/maquette-grid/default.dat"));
+		QFile::setPermissions(directory + QLatin1String("/bookmarks.xbel"), QFileDevice::ReadUser | QFileDevice::WriteUser);
+
+		settings.setValue("versionNumber", 16);
 	}
 }
 
 void Application::loadThemesSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	// Load theme info
 	QFileInfo themeInfo{
-		paths()[Application::P_Themes] + QLatin1Char('/')
+		DataPaths::currentProfilePath() + "/themes" + QLatin1Char('/')
 		+ settings.value("Themes/currentTheme", "sielo-default").toString()
 		+ QLatin1String("/main.sss")
 	};
@@ -456,9 +562,9 @@ void Application::loadThemesSettings()
 	// Check if the theme existe
 	if (themeInfo.exists()) {
 		// Check default theme version and update it if needed
-		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 43) {
+		if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 53) {
 			if (settings.value("Themes/defaultThemeVersion", 1).toInt() < 11) {
-				QString defaultThemePath{paths()[Application::P_Themes]};
+				QString defaultThemePath{DataPaths::currentProfilePath() + "/themes"};
 
 				QDir(defaultThemePath + "/bluegrey-flat").removeRecursively();
 				QDir(defaultThemePath + "/cyan-flat").removeRecursively();
@@ -482,11 +588,11 @@ void Application::loadThemesSettings()
 			loadThemeFromResources("round-theme", false);
 			loadThemeFromResources("ColorZilla", false);
 			loadThemeFromResources("sielo-default", false);
-			settings.setValue("Themes/defaultThemeVersion", 43);
+			settings.setValue("Themes/defaultThemeVersion", 52);
 		}
 
 		loadTheme(settings.value("Themes/currentTheme", QLatin1String("sielo-default")).toString(),
-		          settings.value("Themes/lightness", QLatin1String("dark")).toString());
+				  settings.value("Themes/lightness", QLatin1String("dark")).toString());
 
 	}
 	else {
@@ -496,25 +602,78 @@ void Application::loadThemesSettings()
 		loadThemeFromResources("round-theme", false);
 		loadThemeFromResources("ColorZilla", false);
 		loadThemeFromResources();
-		settings.setValue("Themes/defaultThemeVersion", 43);
+
+		settings.setValue("Themes/defaultThemeVersion", 53);
+	}
+}
+
+void Application::loadPluginsSettings()
+{
+	Settings settings{};
+
+	int pluginsVersion{settings.value("Plugin-Settings/pluginsVersion", 0).toInt()};
+	QString pluginsPath{DataPaths::currentProfilePath() + "/plugins"};
+	QString dataPluginsPath{":/plugins/data/plugins/"};
+
+	if (pluginsVersion < 6) {
+#if defined(Q_OS_WIN)
+		copyPath(QDir(dataPluginsPath + "/windows").absolutePath(), pluginsPath);
+#elif defined(Q_OS_MACOS) 
+		copyPath(QDir(dataPluginsPath + "/macos").absolutePath(), pluginsPath);
+#else 
+		copyPath(QDir(dataPluginsPath + "/linux").absolutePath(), pluginsPath);
+#endif
+
+		settings.setValue("Plugin-Settings/pluginsVersion", 6);
 	}
 }
 
 void Application::loadTranslationSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 	settings.beginGroup("Language");
 
-	if (settings.value("version", 0).toInt() < 14) {
-		QDir(paths()[P_Translations]).removeRecursively();
-		copyPath(QDir(":data/locale").absolutePath(), paths()[P_Translations]);
-		settings.setValue("version", 14);
+	if (settings.value("version", 0).toInt() < 18) {
+		QDir(DataPaths::currentProfilePath() + "/locale").removeRecursively();
+		copyPath(QDir(":data/locale").absolutePath(), DataPaths::currentProfilePath() + "/locale");
+		settings.setValue("version", 18);
 	}
+}
+
+void Application::updateToProfiles()
+{
+	Settings settings{};
+	QSettings oldSettings{"Feldrise", "Sielo"};
+	QStringList keys = oldSettings.allKeys();
+
+	for (const QString& key : keys)
+		settings.setValue(key, oldSettings.value(key));
+
+	QString appData{QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)};
+	QString oldDataPath{appData.insert(appData.count() - 6, "/Feldrise")};
+
+	std::string stdOld = oldDataPath.toStdString();
+	
+	copyPath(oldDataPath +"/themes", DataPaths::currentProfilePath() + "/themes", true);
+	copyPath(oldDataPath + "/maquette-grid", DataPaths::currentProfilePath() + "/maquette-grid", true);
+	
+	QFile(DataPaths::currentProfilePath() + "/bookmarks.json").remove();
+	QFile(DataPaths::currentProfilePath() + "/fbutton.dat").remove();
+	QFile(oldDataPath + "/bookmarks.json").copy(DataPaths::currentProfilePath() + "/bookmarks.json");
+	QFile(oldDataPath + "/fbutton.dat").copy(DataPaths::currentProfilePath() + "/fbutton.dat");
+
+	loadThemeFromResources("firefox-like-light", false);
+	loadThemeFromResources("firefox-like-dark", false);
+	loadThemeFromResources("sielo-flat", false);
+	loadThemeFromResources("round-theme", false);
+	loadThemeFromResources("ColorZilla", false);
+	loadThemeFromResources("sielo-default", false);
+	settings.setValue("Themes/defaultThemeVersion", 44);
 }
 
 void Application::translateApplication()
 {
-	QSettings settings{};
+	Settings settings{};
 	QString file{settings.value("Language/language", QLocale::system().name()).toString()};
 
 	// It can only be "C" locale, for which we will use default English language
@@ -527,7 +686,7 @@ void Application::translateApplication()
 	// Either we load default language (with empty file), or we attempt to load xx.qm (xx_yy.qm)
 	Q_ASSERT(file.isEmpty() || file.size() >= 5);
 
-	QString translationPath{paths()[P_Translations]};
+	QString translationPath{DataPaths::currentProfilePath() + "/locale"};
 
 	if (!file.isEmpty()) {
 		if (!QFile(QString("%1/%2").arg(translationPath, file)).exists()) {
@@ -602,7 +761,10 @@ BrowserWindow *Application::createWindow(Application::WindowType type, const QUr
 BrowserWindow *Application::createWindow(MaquetteGridItem* item)
 {
 	Q_ASSERT(windowCount() != 0);
-	BrowserWindow* maquetteGridWindow = new BrowserWindow(item);
+
+	BrowserWindow* maquetteGridWindow = new BrowserWindow(Application::WT_OtherRestoredWindow);
+	RestoreData data = item->data();
+	openSession(maquetteGridWindow, data);
 
 	QObject::connect(maquetteGridWindow, &BrowserWindow::destroyed, this, &Application::windowDestroyed);
 
@@ -612,57 +774,40 @@ BrowserWindow *Application::createWindow(MaquetteGridItem* item)
 
 Application::AfterLaunch Application::afterLaunch() const
 {
-	QSettings settings{};
+	Settings settings{};
 
 	return static_cast<AfterLaunch>(settings.value(QStringLiteral("Settings/afterLaunch"), OpenHomePage).toInt());
 }
 
-bool Application::restoreSession(BrowserWindow* window, RestoreData restoreData)
+void Application::openSession(BrowserWindow* window, RestoreData& restoreData)
 {
-	if (m_privateBrowsing || restoreData.isEmpty())
-		return false;
-
-	// Make the user know that Sielo is working
-	m_isRestoring = true;
 	setOverrideCursor(Qt::BusyCursor);
 
-	window->setUpdatesEnabled(false);
-	window->tabWidget()->closeRecoveryTab();
+	if (!window)
+		window = createWindow(WT_OtherRestoredWindow);
 
-	if (window->tabWidget()->normalTabsCount() > 1) {
-		BrowserWindow* newWindow{createWindow(Application::WT_OtherRestoredWindow)};
-		newWindow->setUpdatesEnabled(false);
-		newWindow->restoreWindowState(restoreData[0]);
-		newWindow->setUpdatesEnabled(true);
+	window->restoreWindowState(restoreData.windows.takeAt(0));
 
-		restoreData.remove(0);
-	}
-	else {
-		int tabCount{window->tabWidget()->pinnedTabsCount()};
-		RestoreManager::WindowData data = restoreData[0];
-
-		data.currentTabs[0] += tabCount;
-		restoreData.remove(0);
-
+	foreach(const BrowserWindow::SavedWindow &data, restoreData.windows)
+	{
+		BrowserWindow* window = createWindow(WT_OtherRestoredWindow);
 		window->restoreWindowState(data);
 	}
 
-	window->setUpdatesEnabled(true);
-
-	processEvents();
-
-	foreach (const RestoreManager::WindowData& data, restoreData) {
-		BrowserWindow* window{createWindow(Application::WT_OtherRestoredWindow)};
-
-		window->setUpdatesEnabled(false);
-		window->restoreWindowState(data);
-		window->setUpdatesEnabled(true);
-
-		processEvents();
-	}
-
-	destroyRestoreManager();
 	restoreOverrideCursor();
+}
+
+bool Application::restoreSession(BrowserWindow* window, RestoreData restoreData)
+{
+	if (m_privateBrowsing || !restoreData.isValid())
+		return false;
+
+	m_isRestoring = true;
+
+	openSession(window, restoreData);
+
+	m_restoreManager->clearRestoreData();
+	destroyRestoreManager();
 
 	m_isRestoring = false;
 
@@ -675,6 +820,27 @@ void Application::destroyRestoreManager()
 	m_restoreManager = nullptr;
 }
 
+void Application::addSidebar(const QString& id, SideBarInterface* sideBarInterface)
+{
+	m_sidebars[id] = sideBarInterface;
+}
+
+void Application::removeSidebar(SideBarInterface* sideBarInterface) {
+	const QString id{m_sidebars.key(sideBarInterface)};
+
+	if (id.isEmpty())
+		return;
+
+	m_sidebars.remove(id);
+
+	foreach(BrowserWindow* window, Application::instance()->windows())
+	{
+		foreach(TabWidget* tabWidget, window->tabsSpaceSplitter()->tabWidgets())
+			tabWidget->sideBarManager()->sideBarRemoved(id);
+	}
+}
+
+
 void Application::saveSettings()
 {
 	// Save settings of AdBlock
@@ -684,7 +850,7 @@ void Application::saveSettings()
 	if (privateBrowsing())
 		return;
 
-	QSettings settings{};
+	QSettings settings{DataPaths::currentProfilePath() + "/settings.ini", QSettings::IniFormat};
 
 	settings.setValue("isRunning", false);
 
@@ -706,7 +872,9 @@ void Application::saveSettings()
 	if (deleteCookies)
 		m_cookieJar->deleteAllCookies();
 
+#ifndef QT_DEBUG
 	m_piwikTracker->sendEvent("exit", "exit", "exit", "exit application");
+#endif
 }
 
 void Application::saveSession(bool saveForHome)
@@ -717,30 +885,26 @@ void Application::saveSession(bool saveForHome)
 	QByteArray data{};
 	QDataStream stream{&data, QIODevice::WriteOnly};
 
-	// Write the current session in version 2
-	stream << 0x0003;
-	stream << m_windows.count();
+	RestoreData restoreData{};
+	restoreData.windows.reserve(m_windows.count());
 
-	// Save tabs of all windows
-	foreach (BrowserWindow* window, m_windows) {
-		window->titleBar()->saveToolBarsPositions();
-		stream << window->saveTabs();
+	for (BrowserWindow* window : m_windows)
+		restoreData.windows.append(BrowserWindow::SavedWindow(window));
 
-		// Save state of window (is it's in full screen)
-		if (window->isFullScreen())
-			stream << QByteArray();
-		else
-			stream << window->saveState();
-
-		stream << window->saveGeometry();
+	if (m_restoreManager && m_restoreManager->isValid()) {
+		QDataStream creashStream(&restoreData.crashedSession, QIODevice::WriteOnly);
+		creashStream << m_restoreManager->restoreData();
 	}
+
+	stream << 1;
+	stream << restoreData;
 
 	// Save data to a file
 	QFile file{};
 	if (saveForHome)
-		file.setFileName(paths()[Application::P_Data] + QLatin1String("/home-session.dat"));
+		file.setFileName(DataPaths::currentProfilePath() + QLatin1String("/home-session.dat"));
 	else
-		file.setFileName(paths()[Application::P_Data] + QLatin1String("/session.dat"));
+		file.setFileName(DataPaths::currentProfilePath() + QLatin1String("/session.dat"));
 
 	file.open(QIODevice::WriteOnly);
 	file.write(data);
@@ -749,7 +913,7 @@ void Application::saveSession(bool saveForHome)
 
 void Application::reloadUserStyleSheet()
 {
-	QSettings setting{};
+	Settings setting{};
 	QString userCSSFile{setting.value("Settings/userStyleSheet", QString()).toString()};
 
 	setUserStyleSheet(userCSSFile);
@@ -759,6 +923,8 @@ void Application::quitApplication()
 {
 	m_isClosing = true;
 
+	m_plugins->shutdown();
+
 	quit();
 }
 
@@ -767,22 +933,6 @@ void Application::postLaunch()
 	// Check if we want to open a new tab
 	if (m_postLaunchActions.contains(OpenNewTab))
 		getWindow()->tabWidget()->addView(QUrl(), Application::NTT_SelectedNewEmptyTab);
-
-	QSettings settings{};
-
-	// Show the "getting started" page if it's the first time Sielo is launch
-	if (!settings.value("installed", false).toBool()) {
-		m_piwikTracker->sendEvent("installation", "installation", "installation", "new installation");
-
-		getWindow()->tabWidget()
-		           ->addView(QUrl("https://sielo.app/thanks.php"),
-		                     Application::NTT_CleanSelectedTabAtEnd);
-
-		NavigationControlDialog* navigationControlDialog{ new NavigationControlDialog(getWindow()) };
-		navigationControlDialog->exec();
-
-		settings.setValue("installed", true);
-	}
 
 	connect(this, &Application::receivedMessage, this, &Application::messageReceived);
 	connect(this, &Application::aboutToQuit, this, &Application::saveSettings);
@@ -794,6 +944,17 @@ void Application::windowDestroyed(QObject* window)
 	Q_ASSERT(m_windows.contains(static_cast<BrowserWindow*>(window)));
 
 	m_windows.removeOne(static_cast<BrowserWindow*>(window));
+}
+
+void Application::onFocusChanged()
+{
+	BrowserWindow* activeBrowserWindow = qobject_cast<BrowserWindow*>(activeWindow());
+
+	if (activeBrowserWindow) {
+		m_lastActiveWindow = activeBrowserWindow;
+
+		emit activeWindowChanged(m_lastActiveWindow);
+	}
 }
 
 void Application::downloadRequested(QWebEngineDownloadItem* download)
@@ -942,17 +1103,18 @@ void Application::startAfterCrash()
 	requestAction.setText(QApplication::tr("You are starting Sielo after a crash. What would you like to do?"));
 
 	QAbstractButton* startBlankSession = requestAction.addButton(QApplication::tr("Start New Session"),
-	                                                             QMessageBox::NoRole);
+																 QMessageBox::NoRole);
 	QAbstractButton* restoreSession = requestAction.addButton(QApplication::tr("Restore Session"),
-	                                                          QMessageBox::YesRole);
+															  QMessageBox::YesRole);
 
 	requestAction.exec();
 
+	// 32bit version is not longer supported since Sielo Maynapeh
 	// Since some people seem to be able to run only the 32 bit version...
-	if (!is32bit()) {
+	/*if (!is32bit()) {
 		QMessageBox::information(nullptr, QApplication::tr("Info"), QApplication::tr(
-			                         "Please, if Sielo continues crashing, consider trying this 32bit version."));
-	}
+			"Please, if Sielo continues crashing, consider trying this 32bit version."));
+	}*/
 
 	if (requestAction.clickedButton() == restoreSession) {
 		m_afterCrashLaunch = AfterLaunch::RestoreSession;
@@ -960,55 +1122,6 @@ void Application::startAfterCrash()
 	else {
 		m_afterCrashLaunch = AfterLaunch::OpenHomePage;
 	}
-}
-
-void Application::connectDatabase()
-{
-	if (!QDir(paths()[Application::P_Data] + QLatin1String("/database")).exists())
-		QDir().mkpath(paths()[Application::P_Data] + QLatin1String("/database"));
-
-	// ndb params
-	ndb::connection_param params{};
-
-	// We want to throw an error if we attemp to write in database in private mode
-	if (m_privateBrowsing) {
-		params.flag = ndb::connection_flag::read_only;
-	}
-
-	// Databases are stored in a specific folder in %appdata%
-	params.path = QString(paths()[Application::P_Data] + QLatin1String("/database")).toStdString();
-
-	// Connecte databases
-	ndb::connect<dbs::password>(params);
-	ndb::connect<dbs::navigation>(params);
-	ndb::connect<dbs::image>(params);
-
-	// TODO: remove this at the end of ndb integration
-	/*const QString dbFile = paths()[Application::P_Data] + QLatin1String("/browsedata.db");
-
-	if (m_databaseConnected)
-		QSqlDatabase::removeDatabase(QSqlDatabase::database().connectionName());
-
-	QSqlDatabase db{QSqlDatabase::addDatabase(QLatin1String("QSQLITE"))};
-
-	db.setDatabaseName(dbFile);
-
-	if (!QFile::exists(dbFile)) {
-		qWarning() << "Cannot find SQLite database file! Copying and using the defaults!";
-
-		QFile(":data/browsedata.db").copy(dbFile);
-		QFile(dbFile).setPermissions(QFile::ReadUser | QFile::WriteUser);
-
-		db.setDatabaseName(dbFile);
-	}
-
-	if (m_privateBrowsing)
-		db.setConnectOptions("QSQLITE_OPEN_READONLY");
-
-	if (!db.open())
-		qWarning() << "Cannot open SQLite database! Continuing without database...";
-*/
-	m_databaseConnected = true;
 }
 
 void Application::processCommand(const QString& command, const QStringList args)
@@ -1020,21 +1133,21 @@ void Application::processCommand(const QString& command, const QStringList args)
 		LoadRequest siteRequest{};
 		siteRequest.setUrl(QUrl("http://www.feldrise.com/Sielo/"));
 
-		getWindow()->tabWidget()->weTab()->webView()
-		           ->loadInNewTab(siteRequest, Application::NTT_CleanSelectedTabAtEnd);
+		getWindow()->tabWidget()->webTab()->webView()
+			->loadInNewTab(siteRequest, Application::NTT_CleanSelectedTabAtEnd);
 	}
 
 	if (command == "github") {
 		LoadRequest githubRequest{};
 		githubRequest.setUrl(QUrl("https://github.com/Feldrise/SieloNavigateur"));
 
-		getWindow()->tabWidget()->weTab()->webView()
-		           ->loadInNewTab(githubRequest, Application::NTT_CleanSelectedTabAtEnd);
+		getWindow()->tabWidget()->webTab()->webView()
+			->loadInNewTab(githubRequest, Application::NTT_CleanSelectedTabAtEnd);
 	}
 
-	/*if (command == "witcher") {
+	if (command == "witcher") {
 		if (args.count() == 1) {
-			QSettings settings{};
+			Settings settings{};
 			QWebEngineSettings* webSettings = QWebEngineSettings::defaultSettings();
 
 			if (args[0] == "enable") {
@@ -1048,9 +1161,9 @@ void Application::processCommand(const QString& command, const QStringList args)
 
 				// Reload font
 						foreach (BrowserWindow* window, m_windows) {
-						for (int i{0}; i < window->tabWidgetsCount(); ++i) {
+						for (int i{0}; i < window->tabsSpaceSplitter()->count(); ++i) {
 							for (int j{0}; j < window->tabWidget(i)->count(); ++j) {
-								window->tabWidget(i)->weTab(j)->addressBar()
+								window->tabWidget(i)->webTab(j)->addressBar()
 										->setFont(m_morpheusFont);
 							}
 							window->tabWidget(i)->tabBar()->qtabBar()->setFont(m_morpheusFont);
@@ -1069,9 +1182,9 @@ void Application::processCommand(const QString& command, const QStringList args)
 
 				// Reload font
 						foreach (BrowserWindow* window, m_windows) {
-						for (int i{0}; i < window->tabWidgetsCount(); ++i) {
+						for (int i{0}; i < window->tabsSpaceSplitter()->count(); ++i) {
 							for (int j{0}; j < window->tabWidget(i)->count(); ++j) {
-								window->tabWidget(i)->weTab(j)->addressBar()
+								window->tabWidget(i)->webTab(j)->addressBar()
 										->setFont(m_normalFont);
 							}
 							window->tabWidget(i)->tabBar()->qtabBar()->setFont(m_normalFont);
@@ -1088,7 +1201,7 @@ void Application::processCommand(const QString& command, const QStringList args)
 			QMessageBox::critical(getWindow(),
 								  QApplication::tr("Failed"),
 								  QApplication::tr("This command need one argument!"));
-	}*/
+	}
 	if (command == "easteregg") {
 		QStringList eastereggs{};
 		eastereggs << "http://feldrise.com"
@@ -1109,13 +1222,13 @@ void Application::processCommand(const QString& command, const QStringList args)
 			<< "https://www.staggeringbeauty.com/";
 
 		int sitesCount{eastereggs.count()};
-		int easteregg{qrand() % ((sitesCount) - 0) + 0};
+		int easteregg{qrand() % ((sitesCount)-0) + 0};
 
 		LoadRequest eastereggRequest{};
 		eastereggRequest.setUrl(eastereggs[easteregg]);
 
-		getWindow()->tabWidget()->weTab()->webView()
-		           ->loadInNewTab(eastereggRequest, Application::NTT_CleanSelectedTabAtEnd);
+		getWindow()->tabWidget()->webTab()->webView()
+			->loadInNewTab(eastereggRequest, Application::NTT_CleanSelectedTabAtEnd);
 	}
 }
 
@@ -1125,8 +1238,8 @@ void Application::addNewTab(const QUrl& url)
 
 	if (window) {
 		window->tabWidget()
-		      ->addView(url,
-		                url.isEmpty() ? Application::NTT_SelectedNewEmptyTab : Application::NTT_SelectedTabAtEnd);
+			->addView(url,
+					  url.isEmpty() ? Application::NTT_SelectedNewEmptyTab : Application::NTT_SelectedTabAtEnd);
 	}
 }
 
@@ -1145,13 +1258,13 @@ void Application::startPrivateBrowsing(const QUrl& startUrl)
 
 	if (!QProcess::startDetached(applicationFilePath(), args))
 		QMessageBox::warning(nullptr,
-		                     "Failed",
-		                     "Cannot start new browser process for private browsing! " + applicationFilePath());
+							 "Failed",
+							 "Cannot start new browser process for private browsing! " + applicationFilePath());
 }
 
 void Application::loadTheme(const QString& name, const QString& lightness)
 {
-	QString activeThemePath{Application::instance()->paths()[Application::P_Themes] + QLatin1Char('/') + name};
+	QString activeThemePath{DataPaths::currentProfilePath() + "/themes" + QLatin1Char('/') + name};
 	QString sss{readFile(activeThemePath + QLatin1String("/main.sss"))};
 
 	// If the theme use user color API
@@ -1160,7 +1273,7 @@ void Application::loadTheme(const QString& name, const QString& lightness)
 		QIcon::setThemeName(lightness);
 	}
 	else {
-		QIcon::setThemeSearchPaths(QStringList() << Application::instance()->paths()[Application::P_Themes]);
+		QIcon::setThemeSearchPaths(QStringList() << DataPaths::currentProfilePath() + "/themes");
 		QIcon::setThemeName(name);
 	}
 
@@ -1184,13 +1297,16 @@ void Application::loadTheme(const QString& name, const QString& lightness)
 	else {
 		setStyleSheet("");
 	}
+
+	if (m_plugins)
+		m_plugins->emitThemeChanged(lightness == "dark");
 }
 
 QString Application::parseSSS(QString& sss, const QString& relativePath, const QString& lightness)
 {
 	// Replace url with absolute path
 	sss.replace(RegExp(QStringLiteral("url\\s*\\(\\s*([^\\*:\\);]+)\\s*\\)")),
-	            QString("url(%1/\\1)").arg(relativePath));
+				QString("url(%1/\\1)").arg(relativePath));
 
 	// Replace some Sielo API properties to Qt properties
 	sss.replace("sproperty", "qproperty");
@@ -1222,15 +1338,15 @@ QString Application::parseSSSBackground(QString& sss, const QString& relativePat
 QString Application::parseSSSColor(QString& sss, const QString& lightness)
 {
 	sss.replace(RegExp(QStringLiteral(
-		            "scolor\\s*\\(\\s*(main|second|accent|text)\\s*,\\s*(normal|light|dark)\\s*,\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*\\)"
-	            )),
-	            "rgba($color\\1\\2, \\3\\4)");
+		"scolor\\s*\\(\\s*(main|second|accent|text)\\s*,\\s*(normal|light|dark)\\s*,\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*\\)"
+	)),
+		"rgba($color\\1\\2, \\3\\4)");
 	sss.replace(
 		RegExp(QStringLiteral(
-			"scolor\\s*\\(\\s*(main|second|accent|text)\\s*,\\s*(normal|light|dark)\\s*\\)")),
+		"scolor\\s*\\(\\s*(main|second|accent|text)\\s*,\\s*(normal|light|dark)\\s*\\)")),
 		"rgba($color\\1\\2, 255)");
 	sss.replace(RegExp(QStringLiteral("scolor\\s*\\(\\s*(main|second|accent|text)\\s*\\)")),
-	            "rgba($color\\1normal, 255)");
+				"rgba($color\\1normal, 255)");
 
 	sss.replace(QLatin1String("\\4"), "");
 
@@ -1254,17 +1370,17 @@ QString Application::parseSSSColor(QString& sss, const QString& lightness)
 
 QString Application::getBlurredBackgroundPath(const QString& defaultBackground, int radius)
 {
-	QSettings settings{};
+	Settings settings{};
 
 	QString backgroundPath = settings.value(QLatin1String("Settings/backgroundPath"), defaultBackground).toString();
 
 	if (!QFile::exists(backgroundPath))
 		return QString();
 
-	QImage backgroundImage{ backgroundPath };
+	QImage backgroundImage{backgroundPath};
 	QPixmap output = QPixmap::fromImage(blurImage(backgroundImage, backgroundImage.rect(), 10));
-	
-	QFile file{ paths()[Application::P_Themes] + QLatin1String("/bluredBackground.png") };
+
+	QFile file{DataPaths::currentProfilePath() + "/themes" + QLatin1String("/bluredBackground.png")};
 	file.open(QIODevice::WriteOnly);
 	output.save(&file, "PNG");
 
@@ -1273,7 +1389,7 @@ QString Application::getBlurredBackgroundPath(const QString& defaultBackground, 
 
 QImage Application::blurImage(const QImage& image, const QRect& rect, int radius, bool alphaOnly)
 {
-	int tab[] = { 14, 10, 8, 6, 5, 5, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2 };
+	int tab[] = {14, 10, 8, 6, 5, 5, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2};
 	int alpha = (radius < 1) ? 16 : (radius > 17) ? 1 : tab[radius - 1];
 
 	QImage result = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -1341,7 +1457,7 @@ QImage Application::blurImage(const QImage& image, const QRect& rect, int radius
 
 void Application::loadThemeFromResources(QString name, bool loadAtEnd)
 {
-	QString defaultThemePath{paths()[Application::P_Themes]};
+	QString defaultThemePath{DataPaths::currentProfilePath() + "/themes"};
 	QString defaultThemeDataPath{":/" + name + "/data/themes/" + name};
 
 	defaultThemePath += QLatin1Char('/') + name;
@@ -1366,15 +1482,16 @@ bool Application::copyPath(const QString& fromDir, const QString& toDir, bool co
 	}
 
 	QFileInfoList fileInfoList = sourceDir.entryInfoList();
-	foreach(QFileInfo fileInfo, fileInfoList) {
+	foreach(QFileInfo fileInfo, fileInfoList)
+	{
 		if (fileInfo.fileName() == "." || fileInfo.fileName() == "..")
 			continue;
 
 		if (fileInfo.isDir()) {
 			/* if it is directory, copy recursively*/
 			if (!copyPath(fileInfo.filePath(),
-			              targetDir.filePath(fileInfo.fileName()),
-			              coverFileIfExist))
+				targetDir.filePath(fileInfo.fileName()),
+				coverFileIfExist))
 				return false;
 		}
 		else {
@@ -1385,9 +1502,9 @@ bool Application::copyPath(const QString& fromDir, const QString& toDir, bool co
 
 			// files copy
 			if (!QFile::copy(fileInfo.filePath(),
-			                 targetDir.filePath(fileInfo.fileName())) ||
+				targetDir.filePath(fileInfo.fileName())) ||
 				!QFile::setPermissions(targetDir.filePath(fileInfo.fileName()),
-				                       QFileDevice::ReadUser | QFileDevice::WriteUser)) {
+				QFileDevice::ReadUser | QFileDevice::WriteUser)) {
 				return false;
 			}
 		}

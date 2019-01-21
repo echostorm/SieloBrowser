@@ -26,6 +26,8 @@
 #ifndef SIELO_BROWSER_NAVIGATIONBAR_HPP
 #define SIELO_BROWSER_NAVIGATIONBAR_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QWidget>
 
 #include <QHBoxLayout>
@@ -37,7 +39,7 @@ class ToolButton;
 
 class TabWidget;
 
-class NavigationToolBar: public QWidget {
+class SIELO_SHAREDLIB NavigationToolBar   : public QWidget {
 Q_OBJECT
 
 public:
@@ -63,6 +65,7 @@ public:
 	void hideBookmarksHistory();
 	void showBookmarksHistory();
 
+	void addExtensionAction(QWidget* widget);
 
 public slots:
 	void refreshBackForwardButtons();
@@ -84,7 +87,10 @@ private:
 	TabWidget* m_tabWidget{nullptr};
 
 	QHBoxLayout* m_layout{nullptr};
+	QHBoxLayout* m_extensionLayout{nullptr};
 	QHBoxLayout* m_bookmarksHistoryLayout{nullptr};
+
+	QWidget* m_extensionWidget{nullptr};
 	QWidget* m_bookmarksHistoryWidget{nullptr};
 
 	ToolButton* m_buttonBack{nullptr};

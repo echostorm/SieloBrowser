@@ -1,7 +1,9 @@
 <RCC>
     <qresource prefix="/">
         <file>data/bookmarks.json</file>
-        <file>data/default-maquettegrid.json</file>
+        <file>data/default-maquettegrid.dat</file>
+		<file>data/profiles.ini</file>
+		<file>data/browsedata.db</file>
         <file>data/fonts/morpheus.ttf</file>
         <file>data/toolbar/add-bookmark.png</file>
         <file>data/toolbar/view-bookmarks.png</file>
@@ -17,6 +19,8 @@
 
         <!-- Sielo translations -->
         <file>data/locale/fr_FR.qm</file>
+        <file>data/locale/de_DE.qm</file>
+        <file>data/locale/es_ES.qm</file>
         <file>data/locale/ar_AR.qm</file>
     </qresource>
 </RCC>

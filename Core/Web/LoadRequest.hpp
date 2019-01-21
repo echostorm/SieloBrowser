@@ -26,12 +26,14 @@
 #ifndef CORE_LOADREQUEST_HPP
 #define CORE_LOADREQUEST_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QUrl>
 #include <QByteArray>
 
 namespace Sn {
 
-class LoadRequest {
+class SIELO_SHAREDLIB LoadRequest {
 public:
 	enum Operation {
 		GetOp = 0,
@@ -57,6 +59,7 @@ public:
 		return *this;
 	}
 
+	bool isValid() const { return m_url.isValid(); }
 	bool isEmpty() const { return m_url.isEmpty(); }
 
 	QUrl url() const { return m_url; }

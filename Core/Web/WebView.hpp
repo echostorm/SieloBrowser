@@ -26,6 +26,8 @@
 #ifndef CORE_WEBVIEW_HPP
 #define CORE_WEBVIEW_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QApplication>
 #include <QPointer>
 
@@ -47,7 +49,7 @@ namespace Sn {
 class WebPage;
 class WebHitTestResult;
 
-class WebView: public QWebEngineView {
+class SIELO_SHAREDLIB WebView: public QWebEngineView {
 Q_OBJECT
 
 public:
@@ -76,6 +78,8 @@ public:
 
 	int loadingProgress() const;
 
+	bool backgroundActivity() const { return m_backgroundActivity; }
+
 	int zoomLevel() const;
 	void setZoomLevel(int level);
 
@@ -91,12 +95,14 @@ public:
 	bool isTransparent() const;
 
 signals:
+	void pageChanged(WebPage* page);
 	void pageRendering();
 	void focusChanged(bool);
 	void viewportResized(QSize);
 	void privacyChanged(bool);
 	void zoomLevelChanged(int);
 	void showNotification(QWidget*);
+	void backgroundActivityChanged(bool);
 
 public slots:
 	void zoomIn();
@@ -133,6 +139,7 @@ protected slots:
 	void sLoadProgress(int progress);
 	void sLoadFinished(bool ok);
 	void sUrlChanged(const QUrl& url);
+	void sTitleChanged(const QString& title);
 	void sIconChanged();
 
 	void openUrlInNewWindow();
@@ -151,6 +158,7 @@ protected slots:
 	void openUrlInBgTab();
 
 protected:
+	void showEvent(QShowEvent* event) override;
 	void resizeEvent(QResizeEvent* event);
 	void contextMenuEvent(QContextMenuEvent* event);
 
@@ -186,6 +194,7 @@ private:
 
 	int m_currentZoomLevel{};
 	int m_progress{100};
+	bool m_backgroundActivity{false};
 	bool m_firstLoad{false};
 
 	QUrl m_clickedUrl{};

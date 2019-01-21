@@ -26,6 +26,9 @@
 #ifndef SIELO_BROWSER_MAINMENU_HPP
 #define SIELO_BROWSER_MAINMENU_HPP
 
+#include "SharedDefines.hpp"
+
+#include <QMenuBar>
 #include <QMenu>
 #include <QAction>
 
@@ -41,11 +44,15 @@ class BookmarksMenu;
 class MaquetteGridMenu;
 class HistoryMenu;
 
-class MainMenu: public QMenu {
+class SIELO_SHAREDLIB MainMenu: public QMenu {
 Q_OBJECT
 
 public:
 	MainMenu(TabWidget* tabWidget, QWidget* parent = nullptr);
+
+	void initMenuBar(QMenuBar* menuBar);
+
+	TabWidget* tabWidget() const { return m_tabWidget; }
 
 	QAction *action(const QString& name) const;
 	QAction *createAction(const QString& name, QMenu* menu, const QIcon& icon, const QString& trName,
@@ -61,8 +68,23 @@ private slots:
 	void openFile();
 	void toggleBookmarksToolBar();
 
+	// Edit menu
+	void undo();
+	void redo();
+	void cut();
+	void copy();
+	void paste();
 	void selectAll();
 	void find();
+
+	// View menu
+	void stop();
+	void reload();
+	void zoomIn();
+	void zoomOut();
+	void zoomReset();
+	void showPageSource();
+	void showFullScreen();
 
 	void webBack();
 	void webForward();
@@ -83,14 +105,20 @@ private slots:
 
 	void quit();
 
+	void aboutToShowSideBarMenu();
+	void aboutToShowToolsMenu();
+
 private:
 	void addActionsToTabWidget();
 
 	QAction* m_toggleBookmarksAction{nullptr};
 
+	QMenu* m_sideBarsMenu{nullptr};
+	QMenu* m_viewMenu{nullptr};
 	BookmarksMenu* m_bookmarksMenu{nullptr};
 	MaquetteGridMenu* m_maquetteGridMenu{nullptr};
 	HistoryMenu* m_historyMenu{nullptr};
+	QMenu* m_pluginsMenu{nullptr};
 	QMenu* m_toolsMenu{nullptr};
 
 	TabWidget* m_tabWidget{nullptr};

@@ -26,15 +26,19 @@
 #ifndef SIELOBROWSER_ADDRESSBARCOMPLETERMODEL_HPP
 #define SIELOBROWSER_ADDRESSBARCOMPLETERMODEL_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QStandardItemModel>
 
 #include <QUrl>
+
+#include <QSqlQuery>
 
 #include "Database/SqlDatabase.hpp"
 
 namespace Sn
 {
-class AddressBarCompleterModel: public QStandardItemModel {
+class SIELO_SHAREDLIB AddressBarCompleterModel: public QStandardItemModel {
 public:
 	enum Role {
 		IdRole = Qt::UserRole + 1,
@@ -57,6 +61,9 @@ public:
 	void addCompletions(const QList<QStandardItem*>& items);
 
 	QList<QStandardItem*> suggestionItems() const;
+
+	static QSqlQuery createHistoryQuery(const QString &searchString, int limit, bool exactMatch = false);
+	static QSqlQuery createDomainQuery(const QString &text);
 
 private:
 	enum Type {

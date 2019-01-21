@@ -31,7 +31,6 @@
 #include <QUrl>
 #include <QUrlQuery>
 
-#include <QSettings>
 #include <QAction>
 
 #include <QMenu>
@@ -43,6 +42,8 @@
 #include "Web/WebHitTestResult.hpp"
 #include "Web/WebInspector.hpp"
 #include "Web/Scripts.hpp"
+
+#include "Utils/Settings.hpp"
 
 #include "History/History.hpp"
 
@@ -72,7 +73,7 @@ QUrl WebView::searchUrl(const QString& searchText)
 	url.setQuery(urlQuery);
 */
 
-	QUrl url{QLatin1String("https:/doosearch.sielo.app/en/res/php/search.php")};
+	QUrl url{QLatin1String("https:/doosearch.sielo.app/direct-search.php")};
 	QUrlQuery urlQuery{};
 
 	urlQuery.addQueryItem(QLatin1String("search"), searchText);
@@ -98,9 +99,10 @@ WebView::WebView(QWidget* parent) :
 	connect(this, &QWebEngineView::loadProgress, this, &WebView::sLoadProgress);
 	connect(this, &QWebEngineView::loadFinished, this, &WebView::sLoadFinished);
 	connect(this, &QWebEngineView::urlChanged, this, &WebView::sUrlChanged);
+	connect(this, &QWebEngineView::titleChanged, this, &WebView::sTitleChanged);
 	connect(this, &QWebEngineView::iconChanged, this, &WebView::sIconChanged);
 
-	QSettings settings{};
+	Settings settings{};
 	m_currentZoomLevel = settings.value("Web-Settings/defaultZoomLevel", WebView::zoomLevels().indexOf(100)).toInt();
 
 	setAcceptDrops(true);
@@ -108,8 +110,6 @@ WebView::WebView(QWidget* parent) :
 
 	if (parentWidget())
 		parentWidget()->installEventFilter(this);
-
-	WebInspector::registerView(this);
 
 	m_zoomLabel = new QLabel(this);
 	m_zoomLabel->setWindowFlags(m_zoomLabel->windowFlags() | Qt::WindowStaysOnTopHint);
@@ -119,7 +119,7 @@ WebView::WebView(QWidget* parent) :
 
 WebView::~WebView()
 {
-	WebInspector::unregisterView(this);
+	Application::instance()->plugins()->emitWebPageDeleted(m_page);
 	// Empty
 }
 
@@ -157,6 +157,7 @@ bool WebView::eventFilter(QObject* watched, QEvent* event)
 		switch (event->type()) {
 		case QEvent::Wheel:
 			newWheelEvent(static_cast<QWheelEvent*>(event));
+			break;
 		case QEvent::MouseButtonPress:
 			newMousePressEvent(static_cast<QMouseEvent*>(event));
 			break;
@@ -189,7 +190,42 @@ bool WebView::eventFilter(QObject* watched, QEvent* event)
 		}
 	}
 
-	return QWebEngineView::eventFilter(watched, event);
+	if (watched == this) {
+		switch (event->type()) {
+		case QEvent::KeyPress:
+		case QEvent::KeyRelease:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonRelease:
+		case QEvent::MouseMove:
+		case QEvent::Wheel:
+			return true;
+
+		case QEvent::Hide:
+			if (isFullScreen()) {
+				triggerPageAction(QWebEnginePage::ExitFullScreen);
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	const bool res = QWebEngineView::eventFilter(watched, event);
+
+	if (watched == m_child) {
+		switch (event->type()) {
+		case QEvent::FocusIn:
+		case QEvent::FocusOut:
+			emit focusChanged(hasFocus());
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return res;
 }
 
 QString WebView::title() const
@@ -220,24 +256,44 @@ void WebView::setPage(WebPage* page)
 	if (m_page == page)
 		return;
 
+	if (m_page) {
+		if (m_page->isLoading()) {
+			emit m_page->loadProgress(100);
+			emit m_page->loadFinished(true);
+		}
+
+		Application::instance()->plugins()->emitWebPageDeleted(m_page);
+		m_page->setView(nullptr);
+		m_page->deleteLater();
+	}
+
 	m_page = page;
 	m_page->setParent(this);
 	QWebEngineView::setPage(page);
+
+	if (m_page->isLoading()) {
+		emit loadStarted();
+		emit loadProgress(m_page->m_loadProgress);
+	}
 
 	connect(m_page, &WebPage::privacyChanged, this, &WebView::privacyChanged);
 	connect(m_page, &WebPage::pageRendering, this, &WebView::pageRendering);
 
 	zoomReset();
 	initActions();
+
+	emit pageChanged(m_page);
 	Application::instance()->plugins()->emitWebPageCreated(m_page);
 }
 
 void WebView::load(const QUrl& url)
 {
+	if (m_page && !m_page->acceptNavigationRequest(url, QWebEnginePage::NavigationTypeTyped, true))
+		return;
+
 	QWebEngineView::load(url);
 
 	if (!m_firstLoad) {
-		WebInspector::pushView(this);
 		m_firstLoad = true;
 	}
 }
@@ -375,7 +431,7 @@ void WebView::zoomOut()
 
 void WebView::zoomReset()
 {
-	QSettings settings{};
+	Settings settings{};
 	int defaultZoomLevel{settings.value("Web-Settings/defaultZoomLevel", zoomLevels().indexOf(100)).toInt()};
 
 	if (m_currentZoomLevel != defaultZoomLevel) {
@@ -436,15 +492,31 @@ void WebView::sLoadFinished(bool ok)
 
 	if (ok) {
 		Application::instance()->history()->addHistoryEntry(this);
+#ifndef QT_DEBUG
 		Application::instance()->piwikTraker()->sendEvent("navigation", "navigation", "page-loaded", "page loaded");
+#endif
 	}
 }
 
 void WebView::sUrlChanged(const QUrl& url)
 {
-	Q_UNUSED(url)
-
+	if (!url.isEmpty() && title().isEmpty()) {
+		const bool oldActivity{m_backgroundActivity};
+		m_backgroundActivity = true;
+		emit titleChanged(title());
+		m_backgroundActivity = oldActivity;
+	}
 	//TODO: Don't save blank page in history
+}
+
+void WebView::sTitleChanged(const QString& title)
+{
+	Q_UNUSED(title);
+
+	if (!isVisible() && !isLoading() && !m_backgroundActivity) {
+		m_backgroundActivity = true;
+		emit backgroundActivityChanged(m_backgroundActivity);
+	}
 }
 
 void WebView::sIconChanged()
@@ -525,6 +597,16 @@ void WebView::openUrlInBgTab()
 {
 	if (QAction* action = qobject_cast<QAction*>(sender()))
 		openUrlInNewTab(action->data().toUrl(), Application::NTT_CleanNotSelectedTab);
+}
+
+void WebView::showEvent(QShowEvent* event)
+{
+	QWebEngineView::showEvent(event);
+
+	if (m_backgroundActivity) {
+		m_backgroundActivity = false;
+		emit backgroundActivityChanged(m_backgroundActivity);
+	}
 }
 
 void WebView::resizeEvent(QResizeEvent* event)
@@ -793,7 +875,7 @@ void WebView::createContextMenu(QMenu* menu, WebHitTestResult& hitTest)
 		createPageContextMenu(menu);
 
 	menu->addSeparator();
-
+	Application::instance()->plugins()->populateWebViewMenu(menu, this, hitTest);
 
 }
 

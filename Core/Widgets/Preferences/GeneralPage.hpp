@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_GENERALPAGE_HPP
 #define SIELOBROWSER_GENERALPAGE_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QWidget>
 
 #include <QVBoxLayout>
@@ -40,7 +42,7 @@
 
 namespace Sn {
 
-class GeneralPage: public QWidget {
+class SIELO_SHAREDLIB GeneralPage: public QWidget {
 Q_OBJECT
 
 public:
@@ -57,8 +59,14 @@ private slots:
 
 	void saveCurrentSession();
 
+	void createProfile();
+	void deleteProfile();
+	void startProfileIndexChanged(int index);
+
 private:
 	void setupUI();
+	void setupUIObjects();
+	void setupLayouts();
 
 	QString createLanguageItem(const QString& lang);
 
@@ -66,12 +74,15 @@ private:
 	QVBoxLayout* m_layoutGroupHomePage{nullptr};
 	QVBoxLayout* m_layoutGroupNewTab{nullptr};
 	QVBoxLayout* m_layoutGroupNewSession{nullptr};
+	QGridLayout* m_layoutGroupProfile{nullptr};
 	QVBoxLayout* m_layoutGroupLanguage{nullptr};
+
+	QCheckBox* m_userSoftwareOpenGL{nullptr};
 
 	// Group Box Home Page
 	QGroupBox* m_groupHomePage{nullptr};
 	QRadioButton* m_radioHPBlank{nullptr};
-	QRadioButton* m_radioHPCustomUrl{nullptr};
+	QRadioButton* m_radioHPCustomUrl{nullptr };
 	QLineEdit* m_homePageUrl{nullptr};
 
 	// Group Box New Tab
@@ -88,6 +99,19 @@ private:
 	QRadioButton* m_radioNSRestoreSession{nullptr};
 	QRadioButton* m_radioNSOpenSaved{nullptr};
 	QPushButton* m_btnSaveCurrentSession{nullptr};
+
+	// Group Box Profil management
+	QGroupBox* m_groupProfile{nullptr};
+	QLabel* m_descActiveProfile{nullptr};
+	QLabel* m_activeProfile{nullptr};
+	QLabel* m_descStartPofile{nullptr};
+	QComboBox* m_startProfile{nullptr};
+
+	QFrame* m_profileControlFrame{nullptr};
+	QHBoxLayout* m_layoutProfileControl{nullptr};
+	QLabel* m_descCantDeleteActiveProfile{nullptr};
+	QPushButton* m_btnCreateNewProfile{nullptr};
+	QPushButton* m_btnDeleteProfile{nullptr};
 
 	// Group Box Language
 	QGroupBox* m_groupLanguage{nullptr};

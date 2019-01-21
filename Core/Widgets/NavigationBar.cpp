@@ -32,6 +32,8 @@
 
 //#include "History/HistoryDialog.hpp"
 
+#include "Plugins/PluginProxy.hpp"
+
 #include "Web/WebPage.hpp"
 #include "Web/Tab/TabbedWebView.hpp"
 
@@ -47,6 +49,8 @@ NavigationToolBar::NavigationToolBar(TabWidget* tabWidget) :
 {
 	setObjectName(QStringLiteral("navigationbar"));
 	QSize iconSize{28, 28};
+
+	setMaximumHeight(100);
 
 	m_layout = new QHBoxLayout(this);
 	m_layout->setMargin(0);
@@ -111,6 +115,12 @@ NavigationToolBar::NavigationToolBar(TabWidget* tabWidget) :
 	m_buttonViewHistory->setAutoRaise(true);
 	m_buttonViewHistory->setFocusPolicy(Qt::NoFocus);
 
+	m_extensionWidget = new QWidget(this);
+
+	m_extensionLayout = new QHBoxLayout(m_extensionWidget);
+	m_extensionLayout->setContentsMargins(0, 0, 0, 0);
+	m_extensionLayout->setSpacing(0);
+
 	m_bookmarksHistoryWidget = new QWidget(this);
 
 	m_bookmarksHistoryLayout = new QHBoxLayout(m_bookmarksHistoryWidget);
@@ -124,6 +134,7 @@ NavigationToolBar::NavigationToolBar(TabWidget* tabWidget) :
 	m_layout->addWidget(m_buttonForward);
 	m_layout->addWidget(m_buttonHome);
 	m_layout->addWidget(tabWidget->addressBars());
+	m_layout->addWidget(m_extensionWidget);
 	m_layout->addWidget(m_bookmarksHistoryWidget);
 
 	connect(m_buttonBack, &ToolButton::clicked, this, &NavigationToolBar::goBack);
@@ -139,6 +150,11 @@ NavigationToolBar::NavigationToolBar(TabWidget* tabWidget) :
 	connect(m_buttonViewBookmarks, &ToolButton::clicked, this, &NavigationToolBar::showBookmarksDialog);
 	connect(m_buttonAddBookmark, &ToolButton::clicked, this, &NavigationToolBar::showAddBookmarkDialog);
 	connect(m_buttonViewHistory, &ToolButton::clicked, this, &NavigationToolBar::showHistoryDialog);
+
+	foreach(QWidget* widget, Application::instance()->plugins()->navigationBarButton(m_tabWidget))
+	{
+		addExtensionAction(widget);
+	}
 }
 
 int NavigationToolBar::layoutMargin() const
@@ -171,30 +187,38 @@ void NavigationToolBar::showBookmarksHistory()
 	m_bookmarksHistoryWidget->show();
 }
 
-void NavigationToolBar::refreshBackForwardButtons()
+void NavigationToolBar::addExtensionAction(QWidget* widget)
 {
-	if (Application::instance()->isClosing() || !m_tabWidget->weTab())
+	if (!widget)
 		return;
 
-	QWebEngineHistory* history{m_tabWidget->weTab()->webView()->page()->history()};
+	m_extensionLayout->addWidget(widget);
+}
+
+void NavigationToolBar::refreshBackForwardButtons()
+{
+	if (Application::instance()->isClosing() || !m_tabWidget->webTab())
+		return;
+
+	QWebEngineHistory* history{m_tabWidget->webTab()->webView()->page()->history()};
 	m_buttonBack->setEnabled(history->canGoBack());
 	m_buttonForward->setEnabled(history->canGoForward());
 }
 
 void NavigationToolBar::goBack()
 {
-	m_tabWidget->weTab()->webView()->back();
+	m_tabWidget->webTab()->webView()->back();
 }
 
 void NavigationToolBar::goBackInNewTab()
 {
 	// TODO: go back in new tab
-	m_tabWidget->addView(m_tabWidget->weTab()->webView()->history()->backItem().url());
+	m_tabWidget->addView(m_tabWidget->webTab()->webView()->history()->backItem().url());
 }
 
 void NavigationToolBar::goForward()
 {
-	m_tabWidget->weTab()->webView()->forward();
+	m_tabWidget->webTab()->webView()->forward();
 }
 
 void NavigationToolBar::goForwardInNewTab()
@@ -204,7 +228,7 @@ void NavigationToolBar::goForwardInNewTab()
 
 void NavigationToolBar::goHome()
 {
-	m_tabWidget->weTab()->sGoHome();
+	m_tabWidget->webTab()->sGoHome();
 }
 
 void NavigationToolBar::goHomeInNewTab()

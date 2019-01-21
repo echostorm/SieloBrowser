@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_COMBOTABBAR_HPP
 #define SIELOBROWSER_COMBOTABBAR_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QTabBar>
@@ -48,7 +50,7 @@ class TabBar;
 class TabBarScrollWidget;
 class TabStackedWidget;
 
-class ComboTabBar: public QWidget {
+class SIELO_SHAREDLIB ComboTabBar: public QWidget {
 Q_OBJECT
 
 	Q_PROPERTY(int currentIndex
@@ -69,7 +71,12 @@ public:
 		NormalTabMinimumWidth,
 		NormalTabMaximumWidth,
 		OverflowedTabWidth,
-		ExtraReservedWidth,
+		ExtraReservedWidth
+	};
+
+	enum DropIndicatorPosition {
+		BeforeTab,
+		AfterTab
 	};
 
 	ComboTabBar(QWidget* parent = nullptr);
@@ -90,6 +97,8 @@ public:
 	void setTabTextColor(int index, const QColor& color);
 
 	QRect tabRect(int index) const;
+	QRect draggedTabRect() const;
+	QPixmap tabPixmap(int index) const;
 
 	int tabAt(const QPoint& position) const;
 
@@ -134,6 +143,7 @@ public:
 
 	bool isPinned(int index) const;
 
+	void setFocusPolicy(Qt::FocusPolicy policy);
 	void setObjectName(const QString& name);
 	void setMouseTracking(bool enable);
 
@@ -151,6 +161,9 @@ public:
 	bool usesScrollButtons() const;
 	void setUsesScrollButtons(bool useButtons);
 
+	void showDropIndicator(int index, DropIndicatorPosition position);
+	void clearDropIndicator();
+
 	bool isDragInProgress() const;
 	bool isScrollInProgress() const;
 	bool isMainBarOverflowed() const;
@@ -166,11 +179,9 @@ signals:
 	void tabCloseRequested(int index);
 	void tabMoved(int from, int to);
 	void scrollBarValueChanged(int value);
-	void detachFromDrop(int index);
 
 public slots:
 	void setUpLayout();
-	void resetDragState();
 	void ensureVisible(int index = -1, int xmargin = -1);
 	void setCurrentIndex(int index);
 
@@ -207,6 +218,7 @@ private:
 	TabBar* localTabBar(int index = -1) const;
 
 	int toLocalIndex(int globalIndex) const;
+	QRect mapFromLocalTabRet(const QRect& rect, QWidget* tabBar) const;
 	void updatePinnedTabBarVisibility();
 
 	QHBoxLayout* m_layout{nullptr};

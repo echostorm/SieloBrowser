@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_MOCKUPSMANAGER_HPP
 #define SIELOBROWSER_MOCKUPSMANAGER_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QDialog>
 #include <QScrollArea>
 
@@ -54,7 +56,7 @@ class MaquetteGrid;
 class MaquetteGridTabsList;
 class MaquetteGridModel;
 
-class AddButton: public QPushButton {
+class SIELO_SHAREDLIB AddButton: public QPushButton {
 Q_OBJECT
 
 public:
@@ -72,7 +74,7 @@ private:
 	QVBoxLayout* m_parentLayout{nullptr};
 };
 
-class MaquetteGridManager: public QDialog {
+class SIELO_SHAREDLIB MaquetteGridManager: public QDialog {
 Q_OBJECT
 
 public:
@@ -85,9 +87,10 @@ public:
 	~MaquetteGridManager();
 
 	MaquetteGridTabsList *createNewTabsList();
-	MaquetteGridTabsList *createTabsList(MaquetteGridItem::TabsSpace* tabsSpace);
+	MaquetteGridTabsList *createTabsList(TabsSpaceSplitter::SavedTabsSpace tabsSpace);
 	QVBoxLayout *createNewTabsSpaceLayout(MaquetteGridTabsList* list);
 
+	BrowserWindow* window() const { return m_window; }
 	AutoSaver *saver() const { return m_saver; }
 
 public slots:

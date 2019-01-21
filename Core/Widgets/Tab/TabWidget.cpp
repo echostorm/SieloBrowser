@@ -27,7 +27,7 @@
 #include <QWindow>
 #include <QScreen>
 
-#include <QSettings>
+#include <QMenuBar>
 
 #include <QClipboard>
 #include <QShortcut>
@@ -41,18 +41,25 @@
 
 #include "Download/DownloadManager.hpp"
 
+#include "Plugins/PluginProxy.hpp"
+
 #include "Utils/ClosedTabsManager.hpp"
 #include "Utils/AutoSaver.hpp"
+#include "Utils/Settings.hpp"
+#include "Utils/SideBarManager.hpp"
 
 #include "Web/WebPage.hpp"
 #include "Web/WebView.hpp"
 #include "Web/WebInspector.hpp"
 #include "Web/Tab/TabbedWebView.hpp"
 
+#include "Widgets/StatusBarMessage.hpp"
 #include "Widgets/NavigationBar.hpp"
 #include "Widgets/MainMenu.hpp"
 #include "Widgets/AddressBar/AddressBar.hpp"
 #include "Widgets/Preferences/PreferencesDialog.hpp"
+#include "Widgets/SideBar/SideBar.hpp"
+#include "Widgets/SideBar/SideBar.hpp"
 #include "Widgets/Tab/MainTabBar.hpp"
 #include "Widgets/Tab/TabIcon.hpp"
 #include "Widgets/Tab/MenuTabs.hpp"
@@ -67,18 +74,18 @@ TabWidget::TabWidget(BrowserWindow* window, Application::TabsSpaceType type, QWi
 	m_saveTimer(new AutoSaver(this)),
 	m_window(window),
 	m_tabsSpaceType(type),
-	m_lastTabIndex(-1),
-	m_lastBackgroundTabIndex(-1)
+	m_statusBarMessage(new StatusBarMessage(this))
 {
 	setObjectName(QLatin1String("tabwidget"));
 
 	m_closedTabsManager = new ClosedTabsManager;
 	
-	m_tabBar = new MainTabBar(m_window, this);
+	m_tabBar = new MainTabBar(this);
 	m_menuTabs = new MenuTabs(this);
 	m_menuClosedTabs = new QMenu(this);
 
 	m_buttonAddTab = new AddTabButton(this, m_tabBar);
+	m_buttonAddTab->setProperty("outside-tabbar", false);
 	m_buttonAddTab->setIcon(Application::getAppIcon("tabbar-addtab", "tabs"));
 
 	m_buttonAddTab2 = new AddTabButton(this, m_tabBar);
@@ -116,6 +123,28 @@ TabWidget::TabWidget(BrowserWindow* window, Application::TabsSpaceType type, QWi
 	m_buttonMainMenu->setIcon(Application::getAppIcon("preferences", "preferences"));
 	m_buttonMainMenu->setShowMenuInside(true);
 
+#ifdef Q_OS_MACOS
+	static MainMenu* macMainMenu = 0;
+
+	if (!macMainMenu) {
+		macMainMenu = new MainMenu(this, nullptr);
+		macMainMenu->initMenuBar(new QMenuBar(nullptr));
+
+		auto windowChanged = [this](BrowserWindow* window) {
+			macMainMenu->disconnect(macMainMenu->tabWidget());
+			connect(window, &BrowserWindow::tabWidgetChanged, macMainMenu, &MainMenu::setTabWidget);
+
+			macMainMenu->setTabWidget(window->tabWidget());
+		};
+
+		connect(m_window, &BrowserWindow::tabWidgetChanged, macMainMenu, &MainMenu::setTabWidget);
+		connect(Application::instance(), &Application::activeWindowChanged, this, windowChanged);
+	}
+	else {
+		macMainMenu->setTabWidget(this);
+	}
+#endif
+
 	m_tabBar->addCornerWidget(m_buttonAddTab2, Qt::TopRightCorner);
 	m_tabBar->addCornerWidget(m_buttonClosedTabs, Qt::TopRightCorner);
 	m_tabBar->addCornerWidget(m_buttonListTabs, Qt::TopRightCorner);
@@ -125,23 +154,14 @@ TabWidget::TabWidget(BrowserWindow* window, Application::TabsSpaceType type, QWi
 	connect(this, &TabStackedWidget::pinStateChanged, this, &TabWidget::changed);
 
 	connect(m_tabBar, &MainTabBar::tabCloseRequested, this, &TabWidget::requestCloseTab);
-	connect(m_tabBar, SIGNAL(reloadTab(int)), this, SLOT(reloadTab(int)));
-	connect(m_tabBar, SIGNAL(stopTab(int)), this, SLOT(stopTab(int)));
-	connect(m_tabBar, SIGNAL(closeAllButCurrent(int)), this, SLOT(closeAllButCurrent(int)));
-	connect(m_tabBar, SIGNAL(closeToRight(int)), this, SLOT(closeToRight(int)));
-	connect(m_tabBar, SIGNAL(closeToLeft(int)), this, SLOT(closeToLeft(int)));
-	connect(m_tabBar, SIGNAL(duplicateTab(int)), this, SLOT(duplicateTab(int)));
-	connect(m_tabBar, SIGNAL(detachTab(int)), this, SLOT(detachTab(int)));
-	connect(m_tabBar, SIGNAL(detachFromDrop(int)), this, SLOT(detachTabFromDrop(int)));
-	//	connect(m_tabBar, SIGNAL(detachTab(int, QPoint)), this, SLOT(detachTab(int, QPoint)));
 	connect(m_tabBar, &MainTabBar::tabMoved, this, &TabWidget::tabMoved);
 	connect(m_tabBar, &MainTabBar::moveAddTabButton, this, &TabWidget::moveAddTabButton);
 	connect(m_tabBar, &MainTabBar::overFlowChanged, this, &TabWidget::tabBarOverFlowChanged);
 
 	connect(m_menuTabs, &MenuTabs::closeTab, this, &TabWidget::requestCloseTab);
 
-	connect(m_buttonAddTab, SIGNAL(clicked()), m_window, SLOT(addTab()));
-	connect(m_buttonAddTab2, SIGNAL(clicked()), m_window, SLOT(addTab()));
+	connect(m_buttonAddTab, SIGNAL(clicked()), this, SLOT(addTab()));
+	connect(m_buttonAddTab2, SIGNAL(clicked()), this, SLOT(addTab()));
 	connect(m_buttonClosedTabs, &ToolButton::aboutToShowMenu, this, &TabWidget::aboutToShowClosedTabsMenu);
 	connect(m_buttonListTabs, &ToolButton::aboutToShowMenu, this, &TabWidget::aboutToShowTabsMenu);
 
@@ -178,23 +198,26 @@ TabWidget::TabWidget(BrowserWindow* window, Application::TabsSpaceType type, QWi
 	connect(closeTabAction2, SIGNAL(activated()), this, SLOT(requestCloseTab()));
 	connect(windowInFullScreenAction, &QShortcut::activated, m_window, &BrowserWindow::toggleFullScreen);
 	connect(tabsSpaceInFullScreenAction, &QShortcut::activated, this, &TabWidget::toggleFullScreen);
-	connect(reorganizeTabsSpaces, &QShortcut::activated, m_window, &BrowserWindow::arrangeTabsSpaces);
+	connect(reorganizeTabsSpaces, &QShortcut::activated, m_window->tabsSpaceSplitter(), &TabsSpaceSplitter::autoResize);
 	connect(showInspectorAction, SIGNAL(activated()), this, SLOT(showInspector()));
 	connect(showSourceAction, &QShortcut::activated, this, &TabWidget::showSource);
 	///**** End of shortcuts ****///
 
 	setTabBar(m_tabBar);
 	loadSettings();
+
+	Application::instance()->plugins()->emitTabsSpaceCreated(this);
 }
 
 TabWidget::~TabWidget()
 {
+	Application::instance()->plugins()->emitTabsSpaceDeleted(this);
 	delete m_closedTabsManager;
 }
 
 void TabWidget::loadSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Tabs-Settings");
 
@@ -204,6 +227,15 @@ void TabWidget::loadSettings()
 	m_newEmptyTabAfterActive = settings.value("newEmptyTabsAfterActive", false).toBool();
 
 	settings.endGroup();
+
+	settings.beginGroup("SideBars");
+
+	QString activeSideBar{settings.value("Active", QString()).toString()};
+
+	if (activeSideBar.isEmpty() && sideBar())
+		sideBar()->close();
+	else
+		sideBarManager()->showSideBar(activeSideBar, false);
 
 	if (m_tabsSpaceType == Application::TST_Web) {
 		settings.beginGroup("Web-Settings");
@@ -271,6 +303,9 @@ void TabWidget::save()
 
 bool TabWidget::restoreState(const QVector<WebTab::SavedTab>& tabs, int currentTab, const QUrl& homeUrl)
 {
+	if (tabs.isEmpty())
+		return false;
+
 	m_homeUrl = homeUrl;
 
 	if (m_homeUrl.isEmpty())
@@ -279,9 +314,6 @@ bool TabWidget::restoreState(const QVector<WebTab::SavedTab>& tabs, int currentT
 	for (WebTab::SavedTab tab : tabs) {
 		int index{addView(QUrl(), Application::NTT_CleanSelectedTab, false, tab.isPinned)};
 		weTab(index)->restoreTab(tab);
-
-		if (tab.isPinned)
-			m_tabBar->updatePinnedTabCloseButton(index);
 	}
 
 	setCurrentIndex(currentTab);
@@ -293,32 +325,34 @@ bool TabWidget::restoreState(const QVector<WebTab::SavedTab>& tabs, int currentT
 	return true;
 }
 
-void TabWidget::closeRecoveryTab()
-{
-	foreach (WebTab* tab, allTabs(false)) {
-		if (tab->url().toString() == QLatin1String("sielo:restore"))
-			closeTab(tab->tabIndex());
-	}
-}
-
 void TabWidget::setCurrentIndex(int index)
 {
-	m_lastTabIndex = currentIndex();
-
 	TabStackedWidget::setCurrentIndex(index);
+}
+
+void TabWidget::goToApplication(QWidget* w)
+{
+	int index{-1};
+
+	for (int i{0}; i < count(); ++i) {
+		if (w == qobject_cast<WebTab*>(widget(i))->application()) {
+			index = i;
+			break;
+		}
+	}
+
+	if (index != -1)
+		TabStackedWidget::setCurrentIndex(index);
 }
 
 void TabWidget::nextTab()
 {
-	QKeyEvent fakeEvent{QKeyEvent::KeyPress, Qt::Key_Tab, Qt::ControlModifier};
-	keyPressEvent(&fakeEvent);
+	setCurrentIndex((currentIndex() + 1) % count());
 }
 
 void TabWidget::previousTab()
 {
-	QKeyEvent fakeEvent
-		{QKeyEvent::KeyPress, Qt::Key_Backtab, QFlags<Qt::KeyboardModifier>(Qt::ControlModifier + Qt::ShiftModifier)};
-	keyPressEvent(&fakeEvent);
+	setCurrentIndex(currentIndex() == 0 ? count() - 1 : currentIndex() - 1);
 }
 
 void TabWidget::currentTabChanged(int index)
@@ -327,15 +361,10 @@ void TabWidget::currentTabChanged(int index)
 		return;
 
 	WebTab* currentTab{weTab(index)};
+	currentTab->tabActivated();
 	WebTab* oldTab{weTab()};
-	WebView* currentWebView = currentTab->webView();
-
-	if (currentWebView->wasLoaded()) {
-		WebInspector::pushView(currentWebView);
-	}
 
 	disconnect(oldTab->webView()->page(), &WebPage::fullScreenRequested, this, &TabWidget::fullScreenRequested);
-
 	connect(currentTab->webView()->page(), &WebPage::fullScreenRequested, this, &TabWidget::fullScreenRequested);
 
 	if (Application::instance()->useTopToolBar()) {
@@ -344,11 +373,10 @@ void TabWidget::currentTabChanged(int index)
 			m_addressBars->setCurrentWidget(addressBar);
 	}
 
-	m_lastBackgroundTabIndex = -1;
-	m_lastTabIndex = index;
+	m_lastBackgroundTab = nullptr;
 	m_currentTabFresh = false;
 
-	m_window->currentTabChanged(oldTab);
+	m_window->currentTabChanged(currentTab);
 
 	if (m_tabsSpaceType != Application::TST_Web && currentTab->addressBar()) {
 		/*currentTab->addressBar()->setEnabled(false);
@@ -370,14 +398,14 @@ int TabWidget::pinnedTabsCount() const
 	return m_tabBar->pinnedTabsCount();
 }
 
-int TabWidget::lastTabIndex() const
-{
-	return m_lastTabIndex;
-}
-
 int TabWidget::extraReservedWidth() const
 {
 	return m_buttonAddTab->width();
+}
+
+WebTab* TabWidget::webTab(int index) const
+{
+	return index < 0 ? weTab() : weTab(index);
 }
 
 QList<WebTab*> TabWidget::allTabs(bool withPinned)
@@ -406,25 +434,66 @@ void TabWidget::setCurrentTabFresh(bool currentTabFresh)
 	m_currentTabFresh = currentTabFresh;
 }
 
-void TabWidget::toggleMuted()
-{
-	if (m_isMutted) {
-		for (int i{0}; i < count(); ++i)
-			weTab(i)->setMuted(false);
-
-		m_isMutted = false;
-	}
-	else {
-		for (int i{0}; i < count(); ++i)
-			weTab(i)->setMuted(true);
-
-		m_isMutted = true;
-	}
-}
-
 void TabWidget::setHomeUrl(const QString& newUrl)
 {
 	m_homeUrl = QUrl(newUrl);
+}
+
+void TabWidget::moveTab(int from, int to)
+{
+	WebTab* tab{webTab(from)};
+	
+	if (!tab)
+		return;
+
+	if ((tab->isPinned() && to >= pinnedTabsCount()) || (!tab->isPinned() && to < pinnedTabsCount()))
+		tab->togglePinned();
+
+	TabStackedWidget::moveTab(from, to);
+}
+
+int TabWidget::pinUnPinTab(int index, const QString& title)
+{
+	const int newIndex{TabStackedWidget::pinUnPinTab(index, title)};
+
+	if (index != newIndex)
+		emit tabMoved(index, newIndex);
+
+	return newIndex;
+}
+
+void TabWidget::detachTab(WebTab* tab)
+{
+	Q_ASSERT(tab);
+
+	if (count() == 1 && m_window->tabsSpaceSplitter()->count() == 1 && Application::instance()->windowCount() == 1)
+		return;
+
+	if (Application::instance()->useTopToolBar())
+		m_addressBars->removeWidget(tab->addressBar());
+
+	disconnect(tab->webView(), &TabbedWebView::wantsCloseTab, this, &TabWidget::closeTab);
+	disconnect(tab->webView(), SIGNAL(urlChanged(QUrl)), this, SIGNAL(changed()));
+
+	const int index{tab->tabIndex()};
+
+	tab->detach();
+	tab->setPinned(false);
+
+	emit tabRemoved(index);
+
+	if (count() == 0) {
+		if (m_window->tabsSpaceSplitter()->count() > 1)
+			m_window->tabsSpaceSplitter()->removeTabsSpace(this);
+		else
+			m_window->close();
+	}
+}
+
+void TabWidget::addTab()
+{
+	addView(QUrl(), Application::NTT_SelectedNewEmptyTab, true);
+	setCurrentTabFresh(true);
 }
 
 int TabWidget::addView(const QUrl& url)
@@ -445,7 +514,6 @@ int TabWidget::addView(const LoadRequest& request, const QString& title, const A
                        bool selectLine, int position, bool pinned)
 {
 	QUrl url{request.url()};
-	m_lastTabIndex = currentIndex();
 	m_currentTabFresh = false;
 
 	if (url.isEmpty() && !(openFlags & Application::NTT_CleanTab))
@@ -457,13 +525,14 @@ int TabWidget::addView(const LoadRequest& request, const QString& title, const A
 		openAfterActive = true;
 
 	if (openAfterActive && position == -1) {
-		if (openFlags & Application::NTT_NotSelectedTab && m_lastBackgroundTabIndex != -1)
-			position = m_lastBackgroundTabIndex;
+		if (openFlags & Application::NTT_NotSelectedTab && m_lastBackgroundTab)
+			position = m_lastBackgroundTab->tabIndex() + 1;
 		else
 			position = qMax(currentIndex() + 1, m_tabBar->pinnedTabsCount());
 	}
 
-	WebTab* webTab{new WebTab(m_window)};
+	WebTab* webTab{new WebTab(this)};
+	webTab->setPinned(pinned);
 	webTab->addressBar()->showUrl(url);
 	if (Application::instance()->useTopToolBar())
 		m_addressBars->addWidget(webTab->addressBar());
@@ -471,7 +540,6 @@ int TabWidget::addView(const LoadRequest& request, const QString& title, const A
 	int index{insertTab(position == -1 ? count() : position, webTab, QString(), pinned)};
 
 	webTab->attach(this);
-	webTab->setMuted(m_isMutted);
 
 	if (!title.isEmpty())
 		m_tabBar->setTabText(index, title);
@@ -479,7 +547,7 @@ int TabWidget::addView(const LoadRequest& request, const QString& title, const A
 	if (openFlags & Application::NTT_SelectedTab)
 		setCurrentIndex(index);
 	else
-		m_lastBackgroundTabIndex = index;
+		m_lastBackgroundTab = webTab;
 
 	connect(webTab->webView(), &TabbedWebView::wantsCloseTab, this, &TabWidget::closeTab);
 	connect(webTab->webView(), SIGNAL(urlChanged(QUrl)), this, SIGNAL(changed()));
@@ -496,28 +564,62 @@ int TabWidget::addView(const LoadRequest& request, const QString& title, const A
 	else if (request.url().isValid())
 		webTab->webView()->load(request);
 
-	if (selectLine && m_window->webView()->webTab()->addressBar()->text().isEmpty())
-		m_window->webView()->webTab()->addressBar()->setFocus();
+	if (selectLine && weTab()->addressBar()->text().isEmpty())
+		weTab()->addressBar()->setFocus();
 
 	if (!(openFlags & Application::NTT_SelectedTab))
 		m_tabBar->ensureVisible(index);
 
 	emit changed();
+	emit tabInserted(index);
+
 	return index;
 }
 
-int TabWidget::addView(WebTab* tab)
+int TabWidget::addView(WebTab* tab, const Application::NewTabTypeFlags& openFlags)
+{
+	return insertView(count() + 1, tab, openFlags);
+}
+
+int TabWidget::insertView(int index, WebTab* tab, const Application::NewTabTypeFlags& openFlags)
 {
 	if (Application::instance()->useTopToolBar())
 		m_addressBars->addWidget(tab->addressBar());
 
-	int index{addTab(tab, QString())};
+	int newIndex{insertTab(index, tab, QString(), tab->isPinned())};
+
 	tab->attach(this);
+
+	if (openFlags.testFlag(Application::NTT_SelectedTab))
+		setCurrentIndex(newIndex);
+	else
+		m_lastBackgroundTab = tab;
 
 	connect(tab->webView(), &TabbedWebView::wantsCloseTab, this, &TabWidget::closeTab);
 	connect(tab->webView(), SIGNAL(urlChanged(QUrl)), this, SIGNAL(changed()));
 
+	if (!(openFlags & Application::NTT_SelectedTab))
+		m_tabBar->ensureVisible();
+
+	emit changed();
+	emit tabInserted(newIndex);
+
+	return newIndex;
+}
+
+int TabWidget::addApplication(QWidget* application)
+{
+	WebTab* tab{new WebTab(this)};
+	tab->loadApplication(application);
+
+	int index{addView(tab, Application::NTT_SelectedTabAtEnd)};
+
 	return index;
+
+}
+int TabWidget::insertApplication(int index, QWidget* application)
+{
+	return -1;
 }
 
 void TabWidget::addTabFromClipboard()
@@ -551,30 +653,35 @@ void TabWidget::closeTab(int index)
 	if (!webTab || !validIndex(index))
 		return;
 
+	if (count() <= 1) {
+		requestCloseTab(index);
+		return;
+	}
+
+	m_closedTabsManager->saveTab(webTab, index);
+
 	TabbedWebView* webView{webTab->webView()};
-
-	if (webView->url().toString() != QLatin1String("sielo:restore"))
-		m_closedTabsManager->saveTab(webTab, index);
-
+	
 	if (Application::instance()->useTopToolBar())
 		m_addressBars->removeWidget(webView->webTab()->addressBar());
 
 	disconnect(webView, &TabbedWebView::wantsCloseTab, this, &TabWidget::closeTab);
 	disconnect(webView, SIGNAL(urlChanged(QUrl)), this, SIGNAL(changed()));
 
-	m_lastBackgroundTabIndex = -1;
+	m_lastBackgroundTab = nullptr;
 
 	if (m_menuTabs->isVisible()) {
 		QAction* labelAction{m_menuTabs->actions().last()};
 		labelAction->setText(tr("Currently you have %n opened tab(s)", "", count() - 1));
 	}
 
-	removeTab(index);
+	webTab->detach();
 	webTab->deleteLater();
 
 	updateClosedTabsButton();
 
 	emit changed();
+	emit tabRemoved(index);
 }
 
 void TabWidget::requestCloseTab(int index)
@@ -590,7 +697,7 @@ void TabWidget::requestCloseTab(int index)
 
 	//TODO: block close of restore tab
 
-	if (count() == 1 && m_window->tabWidgetsCount() == 1) {
+	if (count() <= 1 && m_window->tabsSpaceSplitter()->count() == 1) {
 		if (m_dontCloseWithOneTab) {
 			if (webView->url() == m_urlOnNewTab)
 				m_closedTabsManager->takeLastClosedTab();
@@ -601,7 +708,7 @@ void TabWidget::requestCloseTab(int index)
 		return;
 	}
 	else if (count() == 1) {
-		m_window->closeTabsSpace(this);
+		m_window->tabsSpaceSplitter()->removeTabsSpace(this);
 		return;
 	}
 
@@ -690,59 +797,33 @@ void TabWidget::closeToLeft(int index)
 void TabWidget::detachTab(int index)
 {
 	WebTab* webTab{weTab(index)};
+	Q_ASSERT(webTab);
 
-	if (webTab->isPinned() || count() == 1)
+	if (count() == 1 && m_window->tabsSpaceSplitter()->count() == 1 && Application::instance()->windowCount() == 1)
 		return;
 
-	if (Application::instance()->useTopToolBar())
-		m_addressBars->removeWidget(webTab->addressBar());
-
-	disconnect(webTab->webView(), &TabbedWebView::wantsCloseTab, this, &TabWidget::closeTab);
-	disconnect(webTab->webView(), SIGNAL(urlChanged(QUrl)), this, SIGNAL(changed()));
-
-	webTab->detach();
+	detachTab(webTab);
 
 	BrowserWindow* window{Application::instance()->createWindow(Application::WT_NewWindow)};
 	window->setStartTab(webTab);
 }
 
-void TabWidget::detachTabFromDrop(int index)
+void TabWidget::loadTab(int index)
 {
-	if (index <= -1)
+	if (!validIndex(index))
 		return;
 
-	WebTab* webTab{weTab(index)};
-	int nbreOfTabs = count();
+	weTab(index)->tabActivated();
+}
 
-	if (nbreOfTabs <= 1 && m_window->tabWidgetsCount() <= 1)
+void TabWidget::unloadTab(int index)
+{
+	if (!validIndex(index))
 		return;
 
-	if (Application::instance()->useTopToolBar())
-		m_addressBars->removeWidget(webTab->addressBar());
-
-	disconnect(webTab->webView(), &TabbedWebView::wantsCloseTab, this, &TabWidget::closeTab);
-	disconnect(webTab->webView(), SIGNAL(urlChanged(QUrl)), this, SIGNAL(changed()));
-
-	webTab->detach();
-
-	BrowserWindow* window{Application::instance()->createWindow(Application::WT_NewWindow)};
-	window->setStartTab(webTab);
-
-	if (nbreOfTabs <= 1) {
-		QTimer::singleShot(100, this, [this]() {
-			m_window->closeTabsSpace(this);
-		});
-	}
+	weTab(index)->unload();
 }
 
-/*
-void TabWidget::detachTab(int index, QPoint position)
-{
-	WebTab* webTab{weTab(index)};
-
-	TabLabel* tabLabel{new TabLabel(webTab, position)};
-}
-*/
 void TabWidget::restoreClosedTab(QObject* obj)
 {
 	if (!obj)
@@ -801,7 +882,7 @@ void TabWidget::showInspector(WebTab* webTab)
 	if (!webTab)
 		webTab = weTab();
 
-	webTab->showInspector();
+	webTab->toggleWebInspector();
 }
 
 void TabWidget::fullScreenRequested(QWebEngineFullScreenRequest request)
@@ -850,7 +931,7 @@ void TabWidget::fullScreenRequested(QWebEngineFullScreenRequest request)
 
 void TabWidget::toggleFullScreen()
 {
-	m_window->tabsSpaceInFullView(parentWidget());
+	m_window->tabsSpaceSplitter()->tabsSpaceInFullView(this);
 }
 
 void TabWidget::moveAddTabButton(int posX)
@@ -946,28 +1027,25 @@ void TabWidget::actionChangeIndex()
 	}
 }
 
-void TabWidget::tabMoved(int before, int after)
+void TabWidget::tabWasMoved(int before, int after)
 {
-	Q_UNUSED(before);
-	Q_UNUSED(after);
-
-	m_lastBackgroundTabIndex = -1;
-	m_lastTabIndex = before;
+	m_lastBackgroundTab = nullptr;
 
 	emit changed();
+	emit tabMoved(before, after);
 }
 
-WebTab *TabWidget::weTab()
+WebTab *TabWidget::weTab() const
 {
 	return weTab(currentIndex());
 }
 
-WebTab *TabWidget::weTab(int index)
+WebTab *TabWidget::weTab(int index) const
 {
 	return qobject_cast<WebTab*>(widget(index));
 }
 
-TabIcon *TabWidget::tabIcon(int index)
+TabIcon *TabWidget::tabIcon(int index) const
 {
 	return weTab(index)->tabIcon();
 }
@@ -980,8 +1058,7 @@ QAction *TabWidget::action(const QString& name) const
 void TabWidget::openBookmarksDialog()
 {
 	BookmarksManager* dialog{new BookmarksManager(m_window, m_window)};
-
-	dialog->show();
+	addApplication(dialog);
 }
 
 void TabWidget::openHistoryDialog()
@@ -995,12 +1072,12 @@ void TabWidget::openHistoryDialog()
 
 	dialog->show();*/
 	HistoryManager* dialog{new HistoryManager(m_window, m_window)};
-	dialog->show();
+	addApplication(dialog);
 }
 
 bool TabWidget::validIndex(int index) const
 {
-	return (index >= 0 && index < count());
+	return (index >= 0 && index < count() && m_window->tabsSpaceSplitter()->count() > 0);
 }
 
 void TabWidget::updateClosedTabsButton()
@@ -1044,5 +1121,21 @@ void TabWidget::setupNavigationBar()
 	AddressBar* addressBar = weTab()->addressBar();
 	if (addressBar && m_addressBars->indexOf(addressBar) != -1)
 		m_addressBars->setCurrentWidget(addressBar);
+}
+
+void TabWidget::keyPressEvent(QKeyEvent* event)
+{
+	if (Application::instance()->plugins()->processKeyPress(Application::ON_TabWidget, this, event))
+		return;
+
+	TabStackedWidget::keyPressEvent(event);
+}
+
+void TabWidget::keyReleaseEvent(QKeyEvent* event)
+{
+	if (Application::instance()->plugins()->processKeyRelease(Application::ON_TabWidget, this, event))
+		return;
+
+	TabStackedWidget::keyReleaseEvent(event);
 }
 }

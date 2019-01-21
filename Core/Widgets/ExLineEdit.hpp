@@ -25,6 +25,8 @@
 #ifndef SIELOBROWSER_EXLINEEDIT_HPP
 #define SIELOBROWSER_EXLINEEDIT_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QWidget>
 #include <QLineEdit>
 
@@ -36,7 +38,7 @@
 namespace Sn {
 class ClearButton;
 
-class ExLineEdit : public QWidget
+class SIELO_SHAREDLIB ExLineEdit : public QWidget
 {
     Q_OBJECT
 

@@ -50,7 +50,12 @@ TabIcon::TabIcon(QWidget* parent) :
 		s_data = new TabIcon::Data;
 
 		s_data->animationPixmap = QIcon(QLatin1String(":icons/tabs/loading.png")).pixmap(512, 16);
-		s_data->framesCount = s_data->animationPixmap.width() / s_data->animationPixmap.height();
+		
+		if (s_data->animationPixmap.height() != 0)
+			s_data->framesCount = s_data->animationPixmap.width() / s_data->animationPixmap.height();
+		else
+			s_data->framesCount = 1;
+
 		s_data->audioPlayingPixmap =
 			Application::getAppIcon("audioplaying", "tabs");
 		s_data->audioMutedPixmap =
@@ -183,7 +188,7 @@ void TabIcon::paintEvent(QPaintEvent* event)
 	r.setWidth(size);
 	r.setHeight(size);
 
-	if (m_animationRunning)
+	if (m_animationRunning && !m_tab->application())
 		painter
 			.drawPixmap(r, s_data->animationPixmap, QRect(m_currentFrame * pixmapSize, 0, pixmapSize, pixmapSize));
 	else if (m_audioIconDisplayed)

@@ -24,9 +24,9 @@
 
 #include "ProxyConfigPage.hpp"
 
-#include <QSettings>
-
 #include <QNetworkProxy>
+
+#include "Utils/Settings.hpp"
 
 #include "Application.hpp"
 
@@ -50,7 +50,7 @@ ProxyConfigPage::~ProxyConfigPage()
 
 void ProxyConfigPage::loadSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Proxy-Settings");
 
@@ -86,7 +86,7 @@ void ProxyConfigPage::save()
 	else
 		proxyType = QNetworkProxy::Socks5Proxy;
 
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Proxy-Settings");
 
@@ -131,6 +131,7 @@ void ProxyConfigPage::setupUI()
 	m_proxyUsername = new QLineEdit(this);
 	m_descProxyPassword = new QLabel(tr("Password:"), this);
 	m_proxyPassword = new QLineEdit(this);
+	m_proxyPassword->setEchoMode(QLineEdit::Password);
 
 	m_leftSpacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Preferred);
 	m_rightSpacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Preferred);

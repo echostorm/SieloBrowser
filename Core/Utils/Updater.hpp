@@ -25,6 +25,8 @@
 #ifndef SIELOBROWSER_UPDATER_HPP
 #define SIELOBROWSER_UPDATER_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QObject>
 
 #include <QNetworkReply>
@@ -34,10 +36,28 @@
 namespace Sn {
 class BrowserWindow;
 
-class Updater: public QObject {
+class SIELO_SHAREDLIB Updater: public QObject {
 Q_OBJECT
 
 public:
+	struct Version {
+		bool isValid{false};
+		int majorVersion{-1};
+		int minorVersion{-1};
+		int revisionNumber{-1};
+
+		Version(const QString& string);
+
+		bool operator<(const Version& other) const;
+		bool operator>(const Version& other) const;
+
+		bool operator==(const Version& other) const;
+		bool operator>=(const Version& other) const;
+		bool operator<=(const Version& other) const;
+
+		QString versionString() const;
+	};
+
 	Updater(BrowserWindow* window, QObject* parent = nullptr);
 
 private slots:

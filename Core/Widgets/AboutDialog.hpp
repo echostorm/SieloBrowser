@@ -26,16 +26,19 @@
 #ifndef SIELO_BROWSER_ABOUTDIALOG_HPP
 #define SIELO_BROWSER_ABOUTDIALOG_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QDialog>
 
 #include <QVBoxLayout>
 
 #include <QLabel>
+#include <QPushButton>
 #include <QTextBrowser>
 #include <QDialogButtonBox>
 
 namespace Sn {
-class AboutDialog: public QDialog {
+class SIELO_SHAREDLIB AboutDialog: public QDialog {
 Q_OBJECT
 
 public:

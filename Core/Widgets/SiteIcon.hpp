@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_SITEICON_HPP
 #define SIELOBROWSER_SITEICON_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QContextMenuEvent>
 #include <QMouseEvent>
 
@@ -37,17 +39,17 @@
 
 namespace Sn {
 
-class BrowserWindow;
+class TabWidget;
 
 class WebView;
 
 class AddressBar;
 
-class SiteIcon : public ToolButton {
+class SIELO_SHAREDLIB SiteIcon : public ToolButton {
 Q_OBJECT
 
 public:
-	SiteIcon(BrowserWindow* window, AddressBar* parent);
+	SiteIcon(TabWidget* tabWidget, AddressBar* parent);
 	~SiteIcon();
 
 	void setWebView(WebView* view);
@@ -62,7 +64,7 @@ private:
 
 	bool showPopup();
 
-	BrowserWindow* m_window{nullptr};
+	TabWidget* m_tabWidget{nullptr};
 	AddressBar* m_addressBar{nullptr};
 	WebView* m_view{nullptr};
 };

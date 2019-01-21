@@ -26,7 +26,7 @@
 
 #include <QAction>
 
-#include <ndb/query.hpp>
+#include <QSqlQuery>
 
 #include "History/History.hpp"
 
@@ -49,16 +49,10 @@ HistoryMenu::HistoryMenu(QWidget* parent) :
 {
 	setTitle(tr("Hi&story"));
 
-	QAction* action = addAction(Application::getAppIcon("arrow-left"), tr("&Back"), this, &HistoryMenu::goBack);
-
-	action = addAction(Application::getAppIcon("arrow-right"), tr("&Forward"), this, &HistoryMenu::goForward);
-
-	action = addAction(Application::getAppIcon("home"), tr("&Home"), this, &HistoryMenu::goHome);
-	action->setShortcut(QKeySequence(Qt::ALT + Qt::Key_Home));
-
-	action = addAction(Application::getAppIcon("history"), tr("Show &All History"), this,
-	                   &HistoryMenu::showHistoryManager);
-	action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_H));
+	QAction* actionBack = addAction(Application::getAppIcon("arrow-left"), tr("&Back"));
+	QAction* actionForward = addAction(Application::getAppIcon("arrow-right"), tr("&Forward"));
+	QAction* actionHome = addAction(Application::getAppIcon("home"), tr("&Home"));
+	QAction* actionShowAllHistory = addAction(Application::getAppIcon("history"), tr("Show &All History"));
 
 	addSeparator();
 
@@ -67,6 +61,11 @@ HistoryMenu::HistoryMenu(QWidget* parent) :
 
 	addMenu(m_menuMostVisited);
 	addMenu(m_menuClosedTabs);
+
+	connect(actionBack, &QAction::triggered, this, &HistoryMenu::goBack);
+	connect(actionForward, &QAction::triggered, this, &HistoryMenu::goForward);
+	connect(actionHome, &QAction::triggered, this, &HistoryMenu::goHome);
+	connect(actionShowAllHistory, &QAction::triggered, this, &HistoryMenu::showHistoryManager);
 
 	connect(this, &QMenu::aboutToShow, this, &HistoryMenu::aboutToShow);
 	connect(this, &QMenu::aboutToHide, this, &HistoryMenu::aboutToHide);
@@ -79,38 +78,38 @@ HistoryMenu::~HistoryMenu()
 	// Empty
 }
 
-void HistoryMenu::setMainWindow(BrowserWindow* window)
+void HistoryMenu::setTabWidget(TabWidget* tabWidget)
 {
-	m_window = window;
+	m_tabWidget = tabWidget;
 }
 
 void HistoryMenu::goBack()
 {
-	if (m_window)
-		m_window->webView()->back();
+	if (m_tabWidget)
+		m_tabWidget->webTab()->webView()->back();
 }
 
 void HistoryMenu::goForward()
 {
-	if (m_window)
-		m_window->webView()->forward();
+	if (m_tabWidget)
+		m_tabWidget->webTab()->webView()->forward();
 }
 
 void HistoryMenu::goHome()
 {
-	if (m_window)
-		m_window->loadUrl(m_window->homePageUrl());
+	if (m_tabWidget)
+		m_tabWidget->webTab()->load(m_tabWidget->homeUrl());
 }
 
 void HistoryMenu::showHistoryManager()
 {
-	if (m_window)
-		m_window->tabWidget()->openHistoryDialog();
+	if (m_tabWidget)
+		m_tabWidget->openHistoryDialog();
 }
 
 void HistoryMenu::aboutToShow()
 {
-	TabbedWebView* view{m_window ? m_window->webView() : 0};
+	TabbedWebView* view{m_tabWidget ? m_tabWidget->webTab()->webView() : nullptr};
 
 	if (view) {
 		actions()[0]->setEnabled(view->history()->canGoBack());
@@ -129,14 +128,18 @@ void HistoryMenu::aboutToShow()
 
 	addSeparator();
 
-	for (auto& entry : ndb::query<dbs::navigation>() << ((history.url, history.title) << ndb::sort(ndb::desc(history.date)) << ndb::limit(10))) {
-		const QUrl url{QString(entry[history.url])};
-		QString title = entry[history.title];
+	QSqlQuery query{SqlDatabase::instance()->database()};
+	query.exec("SELECT title, url FROM history ORDER BY date DESC LIMIT 10");
+
+
+	while (query.next()) {
+		const QUrl url{query.value(1).toUrl()};
+		QString title{query.value(0).toString()};
 
 		if (title.length() > 40)
 			title = title.left(40) + QLatin1String("..");
 
-		QAction* action{ new QAction(title) };
+		QAction* action{new QAction(title)};
 		action->setData(url);
 		action->setIcon(IconProvider::iconForUrl(url));
 
@@ -157,17 +160,17 @@ void HistoryMenu::aboutToShowMostVisited()
 
 	const QVector<History::HistoryEntry> mostVisited = Application::instance()->history()->mostVisited(10);
 
-	foreach (const History::HistoryEntry& entry, mostVisited)
+	foreach(const History::HistoryEntry& entry, mostVisited)
 	{
-		QString title{ entry.title };
+		QString title{entry.title};
 
 		if (title.length() > 40)
 			title = title.left(40) + QLatin1String("..");
 
-		QAction* action{ new QAction(title) };
+		QAction* action{new QAction(title)};
 		action->setData(entry.url);
 		action->setIcon(IconProvider::iconForUrl(entry.url));
-		
+
 		connect(action, &QAction::triggered, this, &HistoryMenu::historyEntryActivated);
 
 		m_menuMostVisited->addAction(action);
@@ -180,21 +183,20 @@ void HistoryMenu::aboutToShowClosedTabs()
 {
 	m_menuClosedTabs->clear();
 
-	if (!m_window)
+	if (!m_tabWidget)
 		return;
 
-	TabWidget* tabWidget{ m_window->tabWidget() };
-	int i{ 0 };
-	const QLinkedList<ClosedTabsManager::Tab> closedTabs = tabWidget->closedTabsManager()->allClosedTab();
+	int i{0};
+	const QLinkedList<ClosedTabsManager::Tab> closedTabs = m_tabWidget->closedTabsManager()->allClosedTab();
 
-	foreach (const ClosedTabsManager::Tab& tab, closedTabs)
+	foreach(const ClosedTabsManager::Tab& tab, closedTabs)
 	{
 		QString title = tab.title;
 
 		if (title.length() > 40)
 			title = title.left(40) + QLatin1String("..");
 
-		QAction* action = m_menuClosedTabs->addAction(tab.icon, title, tabWidget, SLOT(restoreClosedTab()));
+		QAction* action = m_menuClosedTabs->addAction(tab.icon, title, m_tabWidget, SLOT(restoreClosedTab()));
 		action->setData(i++);
 	}
 
@@ -203,8 +205,8 @@ void HistoryMenu::aboutToShowClosedTabs()
 	}
 	else {
 		m_menuClosedTabs->addSeparator();
-		m_menuClosedTabs->addAction(tr("Restore All Closed Tabs"), tabWidget, &TabWidget::restoreAllClosedTabs);
-		m_menuClosedTabs->addAction(tr("Clear list"), tabWidget, &TabWidget::clearClosedTabsList);
+		m_menuClosedTabs->addAction(tr("Restore All Closed Tabs"), m_tabWidget, &TabWidget::restoreAllClosedTabs);
+		m_menuClosedTabs->addAction(tr("Clear list"), m_tabWidget, &TabWidget::clearClosedTabsList);
 	}
 }
 void HistoryMenu::historyEntryActivated()
@@ -214,7 +216,7 @@ void HistoryMenu::historyEntryActivated()
 }
 void HistoryMenu::openUrl(const QUrl& url)
 {
-	if (m_window)
-		m_window->loadUrl(url);
+	if (m_tabWidget)
+		m_tabWidget->webTab()->load(url);
 }
 }

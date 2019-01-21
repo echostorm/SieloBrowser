@@ -26,7 +26,7 @@
 
 #include <QList>
 
-#include <QSettings>
+#include "Utils/Settings.hpp"
 
 #include "Network/BaseUrlInterceptor.hpp"
 
@@ -60,7 +60,7 @@ void NetworkUrlInterceptor::removeUrlInterceptor(BaseUrlInterceptor* interceptor
 
 void NetworkUrlInterceptor::loadSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Web-Settings");
 

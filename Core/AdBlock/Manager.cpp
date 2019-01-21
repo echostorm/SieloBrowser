@@ -24,7 +24,6 @@
 
 #include "AdBlock/Manager.hpp"
 
-#include <QSettings>
 #include <QTimer>
 
 #include <QMessageBox>
@@ -37,6 +36,9 @@
 #include "Application.hpp"
 
 #include "Network/NetworkManager.hpp"
+
+#include "Utils/DataPaths.hpp"
+#include "Utils/Settings.hpp"
 
 #include "AdBlock/Rule.hpp"
 #include "AdBlock/Matcher.hpp"
@@ -75,7 +77,7 @@ void Manager::load()
 	if (m_loaded)
 		return;
 
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("AdBlock-Settings");
 
@@ -92,10 +94,10 @@ void Manager::load()
 		return;
 	}
 
-	QDir adblockDir{Application::instance()->paths()[Application::P_Data] + QLatin1String("/adblock")};
+	QDir adblockDir{DataPaths::currentProfilePath() + QLatin1String("/adblock")};
 
 	if (!adblockDir.exists())
-		QDir(Application::instance()->paths()[Application::P_Data]).mkdir("adblock");
+		QDir(DataPaths::currentProfilePath()).mkdir("adblock");
 
 			foreach (const QString& fileName, adblockDir.entryList(QStringList("*.txt"), QDir::Files)) {
 			if (fileName == QLatin1String("customlist.txt"))
@@ -129,8 +131,7 @@ void Manager::load()
 		Subscription* easyList{new Subscription(tr("EasyList"), this)};
 
 		easyList->setUrl(QUrl("https://easylist-downloads.adblockplus.org/easylist.txt"));
-		easyList->setFilePath(
-				Application::instance()->paths()[Application::P_Data] + QLatin1String("/adblock/easylist.txt"));
+		easyList->setFilePath(DataPaths::currentProfilePath() + QLatin1String("/adblock/easylist.txt"));
 
 		m_subscriptions.prepend(easyList);
 	}
@@ -164,7 +165,7 @@ void Manager::save()
 
 			foreach (Subscription* subscription, m_subscriptions) subscription->saveSubscription();
 
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("AdBlock-Settings");
 
@@ -281,8 +282,7 @@ Subscription* Manager::addSubscription(const QString& title, const QString& url)
 	fileName.remove(QLatin1Char('>'));
 	fileName.remove(QLatin1Char('|'));
 
-	QString filePath{Application::ensureUniqueFilename(
-			Application::instance()->paths()[Application::P_Data] + QLatin1String("/adblock/") + fileName)};
+	QString filePath{Application::ensureUniqueFilename(DataPaths::currentProfilePath() + QLatin1String("/adblock/") + fileName)};
 	QByteArray data{QString("Title: %1\nUrl: %2\n[Adblock Plus 2.0]").arg(title, url).toLatin1()};
 	QFile file{filePath};
 
@@ -386,7 +386,7 @@ void Manager::setEnabled(bool enabled)
 	m_enabled = enabled;
 	emit enabledChanged(enabled);
 
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("AdBlock-Settings");
 
@@ -411,7 +411,7 @@ void Manager::updateAllSubscriptions()
 {
 			foreach (Subscription* subscription, m_subscriptions) subscription->updateSubscription();
 
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("AdBlock-Settings");
 

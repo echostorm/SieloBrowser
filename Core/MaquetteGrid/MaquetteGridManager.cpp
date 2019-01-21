@@ -24,6 +24,10 @@
 
 #include "MaquetteGridManager.hpp"
 
+#include <QFileInfo>
+
+#include "Utils/DataPaths.hpp"
+
 #include "MaquetteGrid/MaquetteGrid.hpp"
 #include "MaquetteGrid/MaquetteGridItem.hpp"
 #include "MaquetteGrid/MaquetteGridTabsList.hpp"
@@ -43,6 +47,7 @@ MaquetteGridManager::MaquetteGridManager(BrowserWindow* window) :
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setObjectName(QLatin1String("maquettegrid-manager"));
+	setWindowTitle("Maquette Grid Manager");
 	setupUI();
 
 	setupMaquetteGridList();
@@ -84,19 +89,19 @@ MaquetteGridTabsList *MaquetteGridManager::createNewTabsList()
 	return list;
 }
 
-MaquetteGridTabsList *MaquetteGridManager::createTabsList(MaquetteGridItem::TabsSpace* tabsSpace)
+MaquetteGridTabsList *MaquetteGridManager::createTabsList(TabsSpaceSplitter::SavedTabsSpace tabsSpace)
 {
 	MaquetteGridTabsList* list{new MaquetteGridTabsList(this, m_tabsSpacesWidget)};
 
-	for (int j{0}; j < tabsSpace->tabs.count(); ++j) {
-		MaquetteGridItem::Tab* tab{tabsSpace->tabs[j]};
+	for (int j{0}; j < tabsSpace.tabs.count(); ++j) {
+		WebTab::SavedTab tab{tabsSpace.tabs[j]};
 		QListWidgetItem* item{
-			new QListWidgetItem(tab->icon, QString("%1 (%2)").arg(tab->title).arg(tab->url.toString()))
+			new QListWidgetItem(tab.icon, QString("%1 (%2)").arg(tab.title).arg(tab.url.toString()))
 		};
 
 		//item->setFlags(item->flags() & ~(Qt::ItemIsDropEnabled));
-		item->setData(MaquetteGridManager::TitleRole, tab->title);
-		item->setData(MaquetteGridManager::UrlRole, tab->url);
+		item->setData(MaquetteGridManager::TitleRole, tab.title);
+		item->setData(MaquetteGridManager::UrlRole, tab.url);
 		/*item->setFlags(
 		static_cast<Qt::ItemFlags>(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::
 		ItemIsDropEnabled));*/
@@ -145,11 +150,11 @@ void MaquetteGridManager::save()
 	m_workingItem->clear();
 
 	foreach(MaquetteGridTabsList* list, m_tabsLists) {
-		MaquetteGridItem::TabsSpace* tabsSpace{list->tabsSpace()};
+		TabsSpaceSplitter::SavedTabsSpace tabsSpace{list->tabsSpace()};
 
 		// "- 1" is a workaroud to be sure to have a 0 index for first column of tabs spaces
-		tabsSpace->verticalIndex = m_verticalLayouts.indexOf(list->parentLayout()) - 1;
-		tabsSpace->parent = m_workingItem;
+		tabsSpace.x = m_verticalLayouts.indexOf(list->parentLayout()) - 1;
+		tabsSpace.y = list->parentLayout()->indexOf(list); 
 
 		m_workingItem->addTabsSpace(tabsSpace);
 	}
@@ -159,7 +164,10 @@ void MaquetteGridManager::save()
 
 void MaquetteGridManager::newMaquetteGrid()
 {
-	MaquetteGridItem* item{new MaquetteGridItem("maquette-grid", true)};
+	QString name{Application::ensureUniqueFilename(DataPaths::currentProfilePath() + QLatin1String("/maquette-grid/maquette-grid.dat"))};
+	name = QFileInfo(name).baseName();
+
+	MaquetteGridItem* item{new MaquetteGridItem(name, true)};
 
 	m_maquetteGrid->addMaquetteGrid(item);
 
@@ -172,7 +180,7 @@ void MaquetteGridManager::newMaquetteGrid()
 
 void MaquetteGridManager::newMaquetteGridFromCurrentSession()
 {
-	MaquetteGridItem* item{ m_window->maquetteGridItem() };
+	MaquetteGridItem* item{ m_window->tabsSpaceSplitter()->maquetteGridItem() };
 
 	m_maquetteGrid->addMaquetteGrid(item);
 
@@ -185,7 +193,7 @@ void MaquetteGridManager::newMaquetteGridFromCurrentSession()
 
 void MaquetteGridManager::deleteMaquetteGrid()
 {
-	if (!m_workingItem)
+	if (!m_workingItem || m_workingItem->name() == "default")
 		return;
 
 	QListWidgetItem* itemToDelet{m_maquetteGridListWidget->currentItem()};
@@ -302,7 +310,7 @@ void MaquetteGridManager::maquetteGridChanged(QListWidgetItem* item)
 
 void MaquetteGridManager::changeMaquetteGridName(const QString& newName)
 {
-	if (!m_workingItem)
+	if (!m_workingItem || m_workingItem->name() == "default")
 		return;
 
 	m_maquetteGridListWidget->currentItem()->setText(newName);
@@ -355,6 +363,9 @@ void MaquetteGridManager::refresh(MaquetteGridItem* item)
 	m_tabsSpacesLayout = new QHBoxLayout(m_tabsSpacesWidget);
 	m_scrollArea->setWidget(m_tabsSpacesWidget);
 
+	m_deleteMaquetteGrid->setEnabled(m_workingItem->name() != "default");
+	m_maquetteGridName->setEnabled(m_workingItem->name() != "default");
+
 	setupTabsSpaces();
 }
 
@@ -368,7 +379,7 @@ void MaquetteGridManager::setupMaquetteGridList()
 
 void MaquetteGridManager::setupFirstTabsSpace()
 {
-	MaquetteGridItem::TabsSpace* firstTabsSpace{m_workingItem->tabsSpaces()[0]};
+	TabsSpaceSplitter::SavedTabsSpace firstTabsSpace{m_workingItem->tabsSpaces()[0]};
 	MaquetteGridTabsList* firstList{createTabsList(firstTabsSpace)};
 
 	QVBoxLayout* firstAddLeftLayout{new QVBoxLayout()};
@@ -397,15 +408,14 @@ void MaquetteGridManager::setupTabsSpaces()
 {
 	Q_ASSERT(m_workingItem->tabsSpaces().count() >= 1);
 
-	m_workingItem = m_workingItem;
 	setupFirstTabsSpace();
 
 	int workingColumn{0};
 	for (int i{1}; i < m_workingItem->tabsSpaces().count(); ++i) {
-		MaquetteGridItem::TabsSpace* tabsSpace{m_workingItem->tabsSpaces()[i]};
+		TabsSpaceSplitter::SavedTabsSpace tabsSpace{m_workingItem->tabsSpaces()[i]};
 		MaquetteGridTabsList* list{createTabsList(tabsSpace)};
 
-		if (tabsSpace->verticalIndex == workingColumn) {
+		if (tabsSpace.x == workingColumn) {
 			QVBoxLayout* layout{m_verticalLayouts[m_verticalLayouts.count() - 2]};
 			AddButton* addBottomTabsSpace{new AddButton(layout, m_tabsSpacesWidget)};
 
@@ -432,7 +442,7 @@ void MaquetteGridManager::setupTabsSpaces()
 			m_tabsSpacesLayout->addLayout(tabsSpaceLayout);
 			m_tabsSpacesLayout->addLayout(addRightLayout);
 
-			workingColumn = tabsSpace->verticalIndex;
+			workingColumn = tabsSpace.x;
 		}
 	}
 }

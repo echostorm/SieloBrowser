@@ -26,19 +26,24 @@
 #ifndef SIELOBROWSER_MOCKUPSMENU_HPP
 #define SIELOBROWSER_MOCKUPSMENU_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QMenu>
+
+#include <QPointer> 
 
 namespace Sn
 {
-	class BrowserWindow;
+class TabWidget;
 
+class MaquetteGridManager;
 class MaquetteGridItem;
 
-class MaquetteGridMenu: public QMenu {
-Q_OBJECT
+class SIELO_SHAREDLIB MaquetteGridMenu: public QMenu {
+	Q_OBJECT
 
 public:
-	MaquetteGridMenu(BrowserWindow* window);
+	MaquetteGridMenu(TabWidget* tabWidget);
 	~MaquetteGridMenu();
 
 private slots:
@@ -52,7 +57,9 @@ private slots:
 private:
 	void refresh();
 
-	BrowserWindow* m_window{ nullptr };
+	TabWidget* m_tabWidget{nullptr};
+	QPointer<MaquetteGridManager> m_manager{};
+
 	bool m_changed{true};
 };
 }

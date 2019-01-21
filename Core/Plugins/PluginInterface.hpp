@@ -26,6 +26,8 @@
 #ifndef CORE_PLUGININTERFACE_HPP
 #define CORE_PLUGININTERFACE_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QtPlugin>
 #include <QPixmap>
 #include <QObject>
@@ -34,11 +36,17 @@
 
 #include "Application.hpp"
 
-namespace Sn {
-
+namespace Sn
+{
+class WebView;
 class WebPage;
+class WebHitTestResult;
 
-struct PluginProp {
+class NavigationToolBar;
+
+class TabWidget;
+
+struct SIELO_SHAREDLIB PluginProp {
 	QString name{};
 	QString info{};
 	QString desc{};
@@ -59,7 +67,7 @@ struct PluginProp {
 	}
 };
 
-class PluginInterface {
+class SIELO_SHAREDLIB PluginInterface {
 public:
 	enum InitState { StartupInitState, LateInitState };
 
@@ -69,58 +77,69 @@ public:
 	virtual bool testPlugin() = 0;
 
 	virtual ~PluginInterface() {}
+	virtual QTranslator* getTranslator(const QString& locale) { Q_UNUSED(locale) return nullptr; }
 	virtual void showSettings(QWidget* parent = nullptr) { Q_UNUSED(parent) }
+
+	virtual QWidget* navigationBarButton(TabWidget* tabWidget) { return nullptr; }
+
+	virtual void populateWebViewMenu(QMenu* menu, WebView* view, const WebHitTestResult& result)
+	{
+		Q_UNUSED(menu)
+			Q_UNUSED(view)
+			Q_UNUSED(menu)
+	}
+	virtual void populateExtensionsMenu(QMenu *menu, TabWidget* tabWidget) { Q_UNUSED(menu) Q_UNUSED(tabWidget) }
 
 	virtual bool mouseDoubleClick(const Application::ObjectName& objName, QObject* obj, QMouseEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 	virtual bool mousePress(const Application::ObjectName& objName, QObject* obj, QMouseEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 	virtual bool mouseRelease(const Application::ObjectName& objName, QObject* obj, QMouseEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 	virtual bool mouseMouve(const Application::ObjectName& objName, QObject* obj, QMouseEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 
 	virtual bool wheelEvent(const Application::ObjectName& objName, QObject* obj, QWheelEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 
 	virtual bool keyPress(const Application::ObjectName& objName, QObject* obj, QKeyEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 	virtual bool keyRelease(const Application::ObjectName& objName, QObject* obj, QKeyEvent* event)
 	{
 		Q_UNUSED(objName)
-		Q_UNUSED(obj)
-		Q_UNUSED(event)
-		return false;
+			Q_UNUSED(obj)
+			Q_UNUSED(event)
+			return false;
 	}
 
 	virtual bool processCommand(const QString& command, const QStringList& args)

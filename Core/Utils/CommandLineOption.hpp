@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_COMMANDLINEOPTION_HPP
 #define SIELOBROWSER_COMMANDLINEOPTION_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QString>
 
 #include <QVector>
@@ -33,7 +35,7 @@
 #include "Application.hpp"
 
 namespace Sn {
-class CommandLineOption {
+class SIELO_SHAREDLIB CommandLineOption {
 public:
 	struct ActionPair {
 		Application::CommandLineAction action;
@@ -43,12 +45,12 @@ public:
 	using ActionPairList = QVector<ActionPair>;
 
 	CommandLineOption();
-	ActionPairList getActions() const { return m_action; }
+	ActionPairList getActions() const { return m_actions; }
 
 private:
 	void parseActions();
 
-	ActionPairList m_action;
+	ActionPairList m_actions;
 
 };
 }

@@ -24,13 +24,14 @@
 
 #include "Bookmarks.hpp"
 
-#include <QSettings>
 #include <QSaveFile>
 
 #include <QJsonParseError>
 #include <QJsonDocument>
 
 #include "Utils/AutoSaver.hpp"
+#include "Utils/DataPaths.hpp"
+#include "Utils/Settings.hpp"
 
 #include "Bookmarks/BookmarkItem.hpp"
 #include "Bookmarks/BookmarksModel.hpp"
@@ -73,7 +74,7 @@ Bookmarks::~Bookmarks()
 
 void Bookmarks::loadSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Bookmarks");
 
@@ -174,7 +175,7 @@ void Bookmarks::changeBookmark(BookmarkItem* item)
 
 void Bookmarks::save()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Bookmarks");
 
@@ -202,7 +203,7 @@ void Bookmarks::setShowOnlyTextInToolbar(bool state)
 
 void Bookmarks::loadBookmarks()
 {
-	const QString bookmarksFile{Application::paths()[Application::P_Data] + QLatin1String("/bookmarks.json")};
+	const QString bookmarksFile{DataPaths::currentProfilePath() + QLatin1String("/bookmarks.json")};
 	const QString backupFile{bookmarksFile + QLatin1String(".old")};
 	QJsonParseError error{};
 	QJsonDocument json = QJsonDocument::fromJson(Application::readAllFileByteContents(bookmarksFile), &error);
@@ -256,7 +257,7 @@ void Bookmarks::saveBookmarks()
 		return;
 	}
 
-	QSaveFile file{Application::paths()[Application::P_Data] + QLatin1String("/bookmarks.json")};
+	QSaveFile file{DataPaths::currentProfilePath() + QLatin1String("/bookmarks.json")};
 
 	if (!file.open(QFile::WriteOnly))
 		qWarning() << "Bookmarks::saveBookmarks() Error opening bookmarks file for writing!";

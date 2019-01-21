@@ -26,6 +26,8 @@
 #ifndef CORE_PLUGINPROXY_HPP
 #define CORE_PLUGINPROXY_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QList>
 
 #include <QWebEnginePage>
@@ -33,13 +35,22 @@
 #include "Plugins/Plugins.hpp"
 #include "Application.hpp"
 
-namespace Sn {
+namespace Sn
+{
 
+class WebView;
 class WebPage;
-class MainWindow;
+class WebTab;
+class TabWidget;
+class WebHitTestResult;
 
-class PluginProxy: public Plugins {
-Q_OBJECT
+class NavigationToolBar;
+
+class TabWidget;
+class BrowserWindow;
+
+class SIELO_SHAREDLIB PluginProxy: public Plugins {
+	Q_OBJECT
 
 public:
 	enum EventHandlerType {
@@ -56,6 +67,11 @@ public:
 	explicit PluginProxy();
 
 	void registerAppEventHandler(const EventHandlerType& type, PluginInterface* obj);
+
+	QList<QWidget*> navigationBarButton(TabWidget* widget);
+
+	void populateWebViewMenu(QMenu* menu, WebView* view, const WebHitTestResult& result);
+	void populateExtensionsMenu(QMenu* menu, TabWidget* tabWidget);
 
 	bool processMouseDoubleClick(const Application::ObjectName& type, QObject* obj, QMouseEvent* event);
 	bool processMousePress(const Application::ObjectName& type, QObject* obj, QMouseEvent* event);
@@ -75,15 +91,32 @@ public:
 	void emitWebPageCreated(WebPage* page);
 	void emitWebPageDeleted(WebPage* page);
 
-	void emitMainWindowCreated(MainWindow* window);
-	void emitMainWindowDeleted(MainWindow* window);
+	void emitWebTabCreated(WebTab* tab);
+	void emitWebTabDeleted(WebTab* tab);
+
+	void emitTabsSpaceCreated(TabWidget* tabSpace);
+	void emitTabsSpaceDeleted(TabWidget* tabSpace);
+
+	void emitMainWindowCreated(BrowserWindow* window);
+	void emitMainWindowDeleted(BrowserWindow* window);
+
+	void emitThemeChanged(bool isDark);
 
 signals:
 	void webPageCreated(WebPage* page);
 	void webPageDeleted(WebPage* page);
 
-	void mainWindowCreated(MainWindow* window);
-	void mainWindowDeleted(MainWindow* window);
+	void webTabCreated(WebTab* tab);
+	void webTabDeleted(WebTab* tab);
+
+	void tabsSpaceCreated(TabWidget* tabsSpace);
+	void tabsSpaceDeleted(TabWidget* tabsSpace);
+	
+	void mainWindowCreated(BrowserWindow* window);
+	void mainWindowDeleted(BrowserWindow* window);
+
+	void themeChanged(bool isDark);
+
 private slots:
 	void pluginUnloaded(PluginInterface* plugin);
 

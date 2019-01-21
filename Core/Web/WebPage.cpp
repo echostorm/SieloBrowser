@@ -34,8 +34,6 @@
 
 #include <QMessageBox>
 
-#include <QSettings>
-
 #include "Web/WebHitTestResult.hpp"
 #include "Web/WebView.hpp"
 #include "Web/Tab/TabbedWebView.hpp"
@@ -55,6 +53,7 @@
 
 #include "Utils/DelayedFileWatcher.hpp"
 #include "Utils/ExternalJsObject.hpp"
+#include "Utils/Settings.hpp"
 
 #include "Plugins/PluginProxy.hpp"
 
@@ -136,6 +135,26 @@ WebView* WebPage::view() const
 	return static_cast<WebView*>(QWebEnginePage::view());
 }
 
+bool WebPage::execPrintPage(QPrinter* printer, int timeout)
+{
+	QPointer<QEventLoop> loop{new QEventLoop};
+	bool result{false};
+
+	QTimer::singleShot(timeout, loop.data(), &QEventLoop::quit);
+
+	print(printer, [loop, &result](bool res) {
+		if (loop && loop->isRunning()) {
+			result = res;
+			loop->quit();
+		}
+	});
+
+	loop->exec();
+	delete loop;
+
+	return result;
+}
+
 QVariant WebPage::executeJavaScript(const QString& scriptSrc, quint32 worldId, int timeout)
 {
 	QPointer<QEventLoop> loop{new QEventLoop};
@@ -198,11 +217,6 @@ void WebPage::javaScriptAlert(const QUrl& securityOrigin, const QString& msg)
 	dialog.exec();
 
 	m_blockAlerts = dialog.isChecked();
-}
-
-void WebPage::setJavaScriptEnable(bool enabled)
-{
-	settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, enabled);
 }
 
 bool WebPage::isRunningLoop()
@@ -329,9 +343,12 @@ void WebPage::featurePermissionRequested(const QUrl& origin, const QWebEnginePag
 
 bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool isMainFrame)
 {
+	if (Application::instance()->isClosing())
+		return QWebEnginePage::acceptNavigationRequest(url, type, isMainFrame);
+
 	if (!Application::instance()->plugins()->acceptNavigationRequest(this, url, type, isMainFrame))
 		return false;
-
+	
 	if (url.scheme() == QLatin1String("abp") && ADB::Manager::instance()->addSubscriptionFromUrl(url))
 		return false;
 
@@ -341,12 +358,12 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
 QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 {
 	TabbedWebView* tabbedWebView = qobject_cast<TabbedWebView*>(view());
-	BrowserWindow* window = tabbedWebView ? tabbedWebView->browserWindow() : Application::instance()->getWindow();
+	BrowserWindow* window = tabbedWebView ? tabbedWebView->webTab()->tabWidget()->window() : Application::instance()->getWindow();
 
 	auto createTab = [=](Application::NewTabTypeFlags tabType)
 	{
 		int index{window->tabWidget()->addView(QUrl(), tabType)};
-		TabbedWebView* view{window->webView(index)};
+		TabbedWebView* view{window->tabWidget()->webTab(index)->webView()};
 		view->setPage(new WebPage);
 		return view->page();
 	};
@@ -373,7 +390,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 
 void WebPage::handleUnknowProtocol(const QUrl& url)
 {
-	QSettings settings{};
+	Settings settings{};
 
 	const QString protocol = url.scheme();
 	QStringList

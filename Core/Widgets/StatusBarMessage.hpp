@@ -25,16 +25,18 @@
 #ifndef SIELOBROWSER_STATUSBARMESSAGE_HPP
 #define SIELOBROWSER_STATUSBARMESSAGE_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QString>
 #include <QObject>
 
 namespace Sn {
-class BrowserWindow;
+class TabWidget;
 class TipLabel;
 
-class StatusBarMessage : public QObject {
+class SIELO_SHAREDLIB StatusBarMessage : public QObject {
 public:
-	StatusBarMessage(BrowserWindow* window);
+	StatusBarMessage(TabWidget* tabWidg);
 
 	void showMessage(const QString& message);
 	void clearMessage();
@@ -43,7 +45,7 @@ protected slots:
 	void sMouseOver(bool arg);
 
 private:
-	BrowserWindow* m_window{nullptr};
+	TabWidget* m_tabWidget{nullptr};
 	TipLabel* m_statusBarText{nullptr};
 };
 }

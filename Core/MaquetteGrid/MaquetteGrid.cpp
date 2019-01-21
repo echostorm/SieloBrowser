@@ -29,6 +29,7 @@
 #include "MaquetteGrid/MaquetteGridItem.hpp"
 
 #include "Utils/AutoSaver.hpp"
+#include "Utils/DataPaths.hpp"
 
 #include "Application.hpp"
 
@@ -59,7 +60,7 @@ void MaquetteGrid::addMaquetteGrid(MaquetteGridItem* maquetteGrid)
 void MaquetteGrid::removeMaquetteGrid(MaquetteGridItem* maquetteGrid)
 {
 	m_maquetteGrid.removeOne(maquetteGrid);
-	QFile::remove(Application::paths()[Application::P_MaquetteGrid] + QLatin1Char('/') + maquetteGrid->name() + QLatin1String(".json"));
+	QFile::remove(DataPaths::currentProfilePath() + QLatin1String("/maquette-grid/") + maquetteGrid->name() + QLatin1String(".dat"));
 
 	emit maquetteGridRemoved(maquetteGrid);
 
@@ -75,8 +76,8 @@ void MaquetteGrid::changeMaquetteGrid(MaquetteGridItem* maquetteGrid)
 
 void MaquetteGrid::loadMaquetteGrid()
 {
-	QDir directory{Application::paths()[Application::P_MaquetteGrid]};
-	QFileInfoList files = directory.entryInfoList(QStringList("*.json"));
+	QDir directory{DataPaths::currentProfilePath() + QLatin1String("/maquette-grid/")};
+	QFileInfoList files = directory.entryInfoList(QStringList("*.dat"));
 
 	foreach(const QFileInfo& info, files) {
 		MaquetteGridItem* maquetteGrid{new MaquetteGridItem(info.baseName())};
@@ -84,7 +85,7 @@ void MaquetteGrid::loadMaquetteGrid()
 	}
 
 	if (m_maquetteGrid.isEmpty())
-		m_maquetteGrid.append(new MaquetteGridItem("maquetteGrid", true));
+		m_maquetteGrid.append(new MaquetteGridItem("default", true));
 }
 
 void MaquetteGrid::save()

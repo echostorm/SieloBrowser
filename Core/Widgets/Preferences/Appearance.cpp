@@ -24,8 +24,6 @@
 
 #include "Widgets/Preferences/Appearance.hpp"
 
-#include <QSettings>
-
 #include <QProcess>
 #include <QTimer>
 
@@ -37,6 +35,8 @@
 #include <QVariant>
 
 #include "Utils/RegExp.hpp"
+#include "Utils/DataPaths.hpp"
+#include "Utils/Settings.hpp"
 
 #include "Widgets/Preferences/PreferencesDialog.hpp"
 
@@ -47,14 +47,14 @@ namespace Sn
 QString AppearancePage::colorString(QString id)
 {
 	QColor returnColor{};
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Themes");
 
 	if (id.contains("main"))
 		returnColor = settings.value(QLatin1String("mainColor"), QColor(30, 30, 30)).value<QColor>();
 	else if (id.contains("second"))
-		returnColor = settings.value(QLatin1String("secondColor"), QColor(30, 30, 30)).value<QColor>();
+		returnColor = settings.value(QLatin1String("secondColor"), QColor(45, 45, 45)).value<QColor>();
 	else if (id.contains("accent"))
 		returnColor = settings.value(QLatin1String("accentColor"), QColor(29, 94, 173)).value<QColor>();
 	else if (id.contains("text"))
@@ -98,7 +98,7 @@ AppearancePage::~AppearancePage()
 
 void AppearancePage::save()
 {
-	QSettings settings;
+	Settings settings;
 
 	settings.beginGroup("Settings");
 
@@ -118,6 +118,7 @@ void AppearancePage::save()
 	settings
 		.setValue(QLatin1String("hideBookmarksHistoryByDefault"),
 		          m_hideBookmarksHistoryActionsByDefault->isChecked());
+	settings.setValue("showActiveTabsSpace", m_showActiveTabsSpace->isChecked());
 
 	settings.setValue(QLatin1String("tabsSpacesPadding"), m_tabsSpacesPadding->value());
 	settings.setValue(QLatin1String("repeatBackground"), m_repeatBackground->isChecked());
@@ -224,7 +225,7 @@ void AppearancePage::addTheme()
 		return;
 
 	QFileInfo themeInfo{
-		Application::paths()[Application::P_Themes] + QLatin1Char('/')
+		DataPaths::currentProfilePath() + "/themes/" + QLatin1Char('/')
 		+ QFileInfo(themeFile).baseName()
 		+ QLatin1String("/main.sss")
 	};
@@ -233,13 +234,13 @@ void AppearancePage::addTheme()
 		QMessageBox::warning(this,
 		                     tr("Theme exist"),
 		                     tr("The theme already exist and is going to be update with the new version."));
-		QDir(Application::paths()[Application::P_Themes] + QLatin1Char('/') + QFileInfo(themeFile).baseName())
+		QDir(DataPaths::currentProfilePath() + "/themes/" + QLatin1Char('/') + QFileInfo(themeFile).baseName())
 			.removeRecursively();
 	}
 
 	QStringList decompileArgs{};
 	decompileArgs << "decompile" << themeFile
-		<< Application::instance()->paths()[Application::P_Themes] + QLatin1Char('/')
+		<< DataPaths::currentProfilePath() + "/themes/" + QLatin1Char('/')
 		+ QFileInfo(themeFile).baseName() << "Theme successfully decompiled";
 
 	QProcess::execute(QDir(QCoreApplication::applicationDirPath()).absolutePath() + QLatin1Char('/') + compilerName,
@@ -329,7 +330,7 @@ AppearancePage::Theme AppearancePage::parseTheme(const QString& path, const QStr
 
 void AppearancePage::loadSettings()
 {
-	QSettings settings{};
+	Settings settings{};
 
 	settings.beginGroup("Settings");
 
@@ -347,6 +348,7 @@ void AppearancePage::loadSettings()
 	                                                .toBool());
 	m_floatingButtonFoloweMouse->setEnabled(!m_useRealToolBar->isChecked());
 	m_hideBookmarksHistoryActionsByDefault->setEnabled(m_useRealToolBar->isChecked());
+	m_showActiveTabsSpace->setChecked(settings.value("showActiveTabsSpace", true).toBool());
 
 	m_tabsSpacesPadding->setValue(settings.value(QLatin1String("tabsSpacesPadding"), 7).toInt());
 	m_tabsSpacesPaddingLabel->setText(tr("Tabs spaces padding (%1px)").arg(m_tabsSpacesPadding->value()));
@@ -362,7 +364,7 @@ void AppearancePage::loadSettings()
 
 	m_themeList->clear();
 
-	QDir dir{Application::instance()->paths()[Application::P_Themes]};
+	QDir dir{DataPaths::currentProfilePath() + "/themes"};
 	QStringList list = dir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
 
 	foreach (const QString& name, list) {
@@ -439,6 +441,7 @@ void AppearancePage::setupUI()
 	m_backgroundLayout = new QHBoxLayout();
 	m_blurFilterLayout = new QVBoxLayout();
 
+	m_themeColorsLayout->setContentsMargins(4, 4, 4, 4);
 	m_areaLayout->setContentsMargins(4, 4, 4, 4);
 	m_areaLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
@@ -446,7 +449,7 @@ void AppearancePage::setupUI()
 	m_themeList->setIconSize(QSize(48, 48));
 
 	m_nameLabel = new QLabel(tr("<b>Name: </b>"), m_areaWidget);
-	//m_nameLabel->setAlignment(Qt::AlignLeading | Qt::AlignLeft | Qt::AlignTop);
+	m_nameLabel->setAlignment(Qt::AlignLeading | Qt::AlignLeft | Qt::AlignTop);
 
 	m_name = new QLabel(m_areaWidget);
 	//m_name->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::TextSelectableByMouse);
@@ -461,14 +464,14 @@ void AppearancePage::setupUI()
 	m_licenseBtn->hide();
 
 	m_authorLabel = new QLabel(tr("<b>Author: </b>"), m_areaWidget);
-	//m_authorLabel->setAlignment(Qt::AlignLeading | Qt::AlignLeft | Qt::AlignTop);
+	m_authorLabel->setAlignment(Qt::AlignLeading | Qt::AlignLeft | Qt::AlignTop);
 
 	m_author = new QLabel(m_areaWidget);
 	m_author->setWordWrap(true);
 	//m_author->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::TextSelectableByMouse);
 
 	m_descLabel = new QLabel(tr("<b>Description: </b>"), m_areaWidget);
-	//m_descLabel->setAlignment(Qt::AlignLeading | Qt::AlignLeft | Qt::AlignTop);
+	m_descLabel->setAlignment(Qt::AlignLeading | Qt::AlignLeft | Qt::AlignTop);
 
 	m_desc = new QLabel(m_areaWidget);
 	m_desc->setWordWrap(true);
@@ -487,6 +490,7 @@ void AppearancePage::setupUI()
 	m_hideBookmarksHistoryActionsByDefault =
 		new QCheckBox(tr("Hide bookmarks and history action in the navigation tool bar by default"));
 	m_floatingButtonFoloweMouse = new QCheckBox(tr("Floating button automatically move to focused tabs space"));
+	m_showActiveTabsSpace = new QCheckBox(tr("Visually show active tabs space with borders"));
 
 	m_tabsSpacesPaddingLabel = new QLabel(tr("Tabs spaces padding (in px)"), this);
 	m_tabsSpacesPadding = new QSlider(Qt::Horizontal, this);
@@ -541,12 +545,20 @@ void AppearancePage::setupUI()
 	m_advancedPageLayout->addWidget(m_useRealToolBar);
 	m_advancedPageLayout->addWidget(m_hideBookmarksHistoryActionsByDefault);
 	m_advancedPageLayout->addWidget(m_floatingButtonFoloweMouse);
+	m_advancedPageLayout->addWidget(m_showActiveTabsSpace);
 	m_advancedPageLayout->addWidget(m_tabsSpacesPaddingLabel);
 	m_advancedPageLayout->addWidget(m_tabsSpacesPadding);
 	m_advancedPageLayout->addWidget(m_repeatBackground);
 	m_advancedPageLayout->addLayout(m_backgroundLayout);
 	m_advancedPageLayout->addLayout(m_blurFilterLayout);
 	m_advancedPageLayout->addItem(m_spacer);
+
+#ifdef Q_OS_WIN
+	if (QCoreApplication::testAttribute(Qt::AA_UseSoftwareOpenGL)) {
+		m_oldChipsetInfoLabel = new QLabel(tr("You are using an old chipset that doesn't have a correct OpenGL port. To improve user experience, the hardware acceleration is disabled."), this);
+		m_advancedPageLayout->addWidget(m_oldChipsetInfoLabel);
+	}
+#endif
 
 	m_tabs->addTab(m_themePage, tr("Themes"));
 	m_tabs->addTab(m_advancedPage, tr("Advanced"));

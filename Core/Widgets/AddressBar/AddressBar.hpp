@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_ADDRESSBAR_HPP
 #define SIELOBROWSER_ADDRESSBAR_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QLineEdit>
 #include <QTextLayout>
 #include <QAction>
@@ -56,21 +58,24 @@ namespace Sn {
 class TabbedWebView;
 class LoadRequest;
 
-class BrowserWindow;
+class TabWidget;
 
 class AddressBarCompleter;
 
 class ToolButton;
 class SiteIcon;
 
-class AddressBar: public LineEdit {
+class SIELO_SHAREDLIB AddressBar: public LineEdit {
 Q_OBJECT
 
 public:
-	AddressBar(BrowserWindow* window);
+	AddressBar(TabWidget* tabWidget);
 
 	TabbedWebView* webView() const { return m_webView; }
 	void setWebView(TabbedWebView* view);
+
+	TabWidget* tabWidget() const { return m_tabWidget; }
+	void setTabWidget(TabWidget* tabWidget);
 
 	static QString urlToText(const QUrl &url);
 
@@ -105,6 +110,7 @@ private:
 	void focusOutEvent(QFocusEvent* event);
 	void dropEvent(QDropEvent* event);
 	void keyPressEvent(QKeyEvent* event);
+	void mousePressEvent(QMouseEvent* event);
 
 	LoadRequest createLoadRequest() const;
 	void refreshTextFormat();
@@ -118,7 +124,7 @@ private:
 	ToolButton* m_reloadStopButton{nullptr};
 	ToolButton* m_goButton{nullptr};
 
-	BrowserWindow* m_window{nullptr};
+	TabWidget* m_tabWidget{nullptr};
 	TabbedWebView* m_webView{nullptr};
 
 	bool m_holdingAlt{false};

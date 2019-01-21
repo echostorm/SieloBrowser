@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_History_HPP
 #define SIELOBROWSER_History_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QObject>
 
 #include <QUrl>
@@ -35,15 +37,13 @@
 
 #include "Database/SqlDatabase.hpp"
 
-constexpr auto history = ndb::models::navigation.history;
-
 namespace Sn
 {
 class WebView;
 
 class HistoryModel;
 
-class History: public QObject {
+class SIELO_SHAREDLIB History: public QObject {
 Q_OBJECT
 
 public:
@@ -59,16 +59,6 @@ public:
 		QString title;
 
 		HistoryEntry() {}
-
-		HistoryEntry(ndb::objects::history entry)
-		{
-			id = entry.id;
-			count = entry.count;
-			date = QDateTime::fromMSecsSinceEpoch(entry.date);
-			url = QUrl(entry.url);
-			urlString = QUrl(entry.url).toEncoded();
-			title = entry.title;
-		}
 	};
 
 	HistoryModel *model();

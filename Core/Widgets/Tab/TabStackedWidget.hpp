@@ -26,24 +26,42 @@
 #ifndef SIELOBROWSER_TABSTACKEDWIDGET_HPP
 #define SIELOBROWSER_TABSTACKEDWIDGET_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QWidget>
 #include <QStackedWidget>
 #include <QVBoxLayout>
+#include <QSplitter>
+
+#include <QMenu>
 
 #include <QEvent>
 #include <QKeyEvent>
+
+#include <QPointer>
+
+#include "Widgets/SideBar/SideBar.hpp"
 
 namespace Sn {
 class ComboTabBar;
 
 class NavigationToolBar;
 
-class TabStackedWidget: public QWidget {
+class SideBarManager;
+
+class SIELO_SHAREDLIB TabStackedWidget: public QWidget {
 Q_OBJECT
 
 public:
 	TabStackedWidget(QWidget* parent = nullptr);
 	~TabStackedWidget();
+
+	SideBarManager* sideBarManager() const { return m_sideBarManager; }
+	SideBar* sideBar() const { return m_sideBar; }
+
+	SideBar* addSideBar();
+	void createSideBarsMenu(QMenu* menu);
+	void saveSideBarSettings();
 
 	ComboTabBar* tabBar() { return m_comboTabBar; }
 	void setTabBar(ComboTabBar* tab);
@@ -65,6 +83,7 @@ public:
 	int pinUnPinTab(int index, const QString& title = QString());
 
 	void removeTab(int index);
+	void moveTab(int from, int to);
 
 	int currentIndex() const;
 	int indexOf(QWidget* widget) const;
@@ -97,6 +116,10 @@ private:
 
 	QStackedWidget* m_stack{nullptr};
 	QVBoxLayout* m_layout{nullptr};
+	QSplitter* m_splitter{nullptr};
+
+	QPointer<SideBar> m_sideBar;
+	SideBarManager* m_sideBarManager{nullptr};
 
 	ComboTabBar* m_comboTabBar{nullptr};
 

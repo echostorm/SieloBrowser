@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_WEBTAB_HPP
 #define SIELOBROWSER_WEBTAB_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QVBoxLayout>
 #include <QGridLayout>
 
@@ -43,12 +45,15 @@
 
 #include <QShowEvent>
 
-namespace Sn {
-class BrowserWindow;
+#include <QPointer>
 
+#include "Web/LoadRequest.hpp"
+#include "Web/WebInspector.hpp"
+
+namespace Sn
+{
 class TabWidget;
 
-class WebInspector;
 class TabbedWebView;
 
 class TabIcon;
@@ -57,8 +62,8 @@ class MainTabBar;
 class FloatingButton;
 class AddressBar;
 
-class WebTab: public QWidget {
-Q_OBJECT
+class SIELO_SHAREDLIB WebTab: public QWidget {
+	Q_OBJECT
 
 public:
 	struct SavedTab {
@@ -66,8 +71,11 @@ public:
 		QUrl url{};
 		QIcon icon{};
 		QByteArray history{};
-		bool isPinned{};
+		bool isPinned{false};
 		int zoomLevel{};
+		int parentTab{-1};
+		QVector<int> childTabs{};
+		QHash<QString, QVariant> sessionData{};
 
 		SavedTab();
 		SavedTab(WebTab* webTab);
@@ -79,22 +87,37 @@ public:
 		friend QDataStream& operator>>(QDataStream& stream, SavedTab& tab);
 	};
 
-	WebTab(BrowserWindow* window);
+	enum AddChildBehavior {
+		AppendChild = 0,
+		PrependChild
+	};
 
+
+	WebTab(TabWidget* tabWidget);
+	~WebTab();
+
+	TabWidget* tabWidget() const { return m_tabWidget; }
 	WebInspector* inspector() const { return m_inspector; }
 	TabbedWebView* webView() const { return m_webView; }
+	QWidget* application() const { return m_application; }
 	TabIcon* tabIcon() const { return m_tabIcon; }
 	AddressBar* addressBar() const { return m_addressBar; }
-	MainTabBar* tabBar() const { return m_tabBar; }
 
 	void takeAddressBar();
+
+	WebTab* parentTab() const { return m_parentTab; }
+	void setParentTab(WebTab* tab);
+	QVector<WebTab*> childTabs() const { return m_childTabs; }
+	void addChildTab(WebTab* tab, int index = -1);
+
+	QHash<QString, QVariant> sessionData() const { return m_sessionData; }
+	void setSessionData(const QString& key, const QVariant& value);
 
 	QUrl url() const;
 	QString title() const;
 	QIcon icon(bool allowNull = false) const;
 	QWebEngineHistory* history() const;
 	int zoomLevel() const;
-
 	void setZoomLevel(int level);
 
 	void detach();
@@ -108,6 +131,9 @@ public:
 
 	void stop();
 	void reload();
+	void load(const LoadRequest& request);
+	void loadApplication(QWidget* application);
+	void unload();
 	bool isLoading() const;
 
 	bool isPinned() const;
@@ -115,12 +141,22 @@ public:
 	void togglePinned();
 
 	bool isMuted() const;
+	bool isPlaying() const;
 	void setMuted(bool muted);
 	void toggleMuted();
 
+	bool backgroundActivity() const;
+
 	int tabIndex() const;
 
-	bool isCurrentTab() const;
+	bool isCurrentTab() const { return m_isCurrentTab; }
+	void makeCurrentTab() const;
+	void closeTab() const;
+	void moveTab(int to) const;
+
+	bool haveInspector() const;
+	void showWebInspector(bool inspectElement = false);
+	void toggleWebInspector();
 
 	void showSearchToolBar();
 
@@ -129,42 +165,62 @@ public:
 	void p_restoreTab(const SavedTab& tab);
 	void p_restoreTab(const QUrl& url, const QByteArray& history, int zoomLevel);
 
+	void tabActivated();
+
+	static AddChildBehavior addChildBehavior();
+	static void setAddChildBehavior(AddChildBehavior behavior);
+
+signals:
+	void titleChanged(const QString& title);
+	void iconChanged(const QIcon& icon);
+	void pinnedChanged(bool pinned);
+	void restoredChanged(bool restored);
+	void currentTabChanged(bool current);
+	void loadingChanged(bool loading);
+	void mutedChanged(bool muted);
+	void playingChanged(bool playing);
+	void backgroundActivityChanged(bool activity);
+	void parentTabChanged(WebTab* tab);
+	void childTabAdded(WebTab* tab, int index);
+	void childTabRemoved(WebTab* tab, int index);
+
 public slots:
 	void sNewWindow();
 	void sNewTab();
 	void sGoHome();
 
-	void showInspector();
-
 private slots:
 	void showNotification(QWidget* notif);
 	void loadStarted();
 	void loadFinished();
-	void titleChanged(const QString& title);
-
-	//	void aboutToShowHistoryNextMenu();
-	void sRestore();
 
 private:
-	void showEvent(QShowEvent* event);
+	void titleWasChanged(const QString& title);
+	void resizeEvent(QResizeEvent* event) override;
+	void removeFromTabTree();
 
 	QVBoxLayout* m_layout{nullptr};
 	QSplitter* m_splitter{nullptr};
 
 	QMenu* m_menuForward{nullptr};
 
-	BrowserWindow* m_window{nullptr};
-	WebInspector* m_inspector{nullptr};
+	TabWidget* m_tabWidget{nullptr};
+	QPointer<WebInspector> m_inspector{};
 	TabbedWebView* m_webView{nullptr};
+	QPointer<QWidget> m_application{};
 	TabIcon* m_tabIcon{nullptr};
-	MainTabBar* m_tabBar{nullptr};
+	QWidget* m_notificationWidget{nullptr};
 
 	AddressBar* m_addressBar{nullptr};
 
+	WebTab* m_parentTab{nullptr};
+	QVector<WebTab*> m_childTabs{};
+	QHash<QString, QVariant> m_sessionData{};
+
 	SavedTab m_savedTab{};
 	bool m_isPinned{false};
-
-	static bool s_pinningTab;
+	bool m_isCurrentTab{false};
 };
 }
 #endif //SIELOBROWSER_WEBTAB_HPP
+

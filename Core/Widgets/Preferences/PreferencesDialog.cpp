@@ -24,6 +24,8 @@
 
 #include "Widgets/Preferences/PreferencesDialog.hpp"
 
+#include "Plugins/PluginsManager.hpp"
+
 #include "Widgets/Tab/TabWidget.hpp"
 
 #include "Widgets/Preferences/GeneralPage.hpp"
@@ -45,6 +47,8 @@ PreferencesDialog::PreferencesDialog(TabWidget* tabWidget, QWidget* parent) :
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setObjectName("preferences-dialog");
+	setWindowTitle(tr("Preferences"));
+	setWindowIcon(Application::getAppIcon("settings", "preferences"));
 
 	QIcon icon = windowIcon();
 	Qt::WindowFlags flags = windowFlags();
@@ -70,16 +74,19 @@ PreferencesDialog::~PreferencesDialog()
 
 void PreferencesDialog::reloadTheme()
 {
-	m_list->item(0)->setIcon(QIcon(Application::getAppIcon("settings", "preferences").pixmap(32)));
-	m_list->item(1)->setIcon(QIcon(Application::getAppIcon("appearance", "preferences").pixmap(32)));
-	m_list->item(2)->setIcon(QIcon(Application::getAppIcon("web-configs", "preferences").pixmap(32)));
-	m_list->item(3)->setIcon(QIcon(Application::getAppIcon("local-storage", "preferences").pixmap(32)));
-	m_list->item(4)->setIcon(QIcon(Application::getAppIcon("proxy", "preferences").pixmap(32)));
-	m_list->item(5)->setIcon(QIcon(Application::getAppIcon("passwords", "preferences").pixmap(32)));
-	m_list->item(6)->setIcon(QIcon(Application::getAppIcon("privacy", "preferences").pixmap(32)));
-	m_list->item(7)->setIcon(QIcon(Application::getAppIcon("download", "preferences").pixmap(32)));
-	m_list->item(8)->setIcon(QIcon(Application::getAppIcon("adblock", "preferences").pixmap(32)));
-	m_list->item(9)->setIcon(Application::getAppIcon("current-tabsspace", "preferences").pixmap(32));
+	const int iconSize{64};
+
+	m_list->item(0)->setIcon(QIcon(Application::getAppIcon("settings", "preferences").pixmap(iconSize)));
+	m_list->item(1)->setIcon(QIcon(Application::getAppIcon("appearance", "preferences").pixmap(iconSize)));
+	m_list->item(2)->setIcon(QIcon(Application::getAppIcon("web-configs", "preferences").pixmap(iconSize)));
+	m_list->item(3)->setIcon(QIcon(Application::getAppIcon("local-storage", "preferences").pixmap(iconSize)));
+	m_list->item(4)->setIcon(QIcon(Application::getAppIcon("proxy", "preferences").pixmap(iconSize)));
+	m_list->item(5)->setIcon(QIcon(Application::getAppIcon("passwords", "preferences").pixmap(iconSize)));
+	m_list->item(6)->setIcon(QIcon(Application::getAppIcon("privacy", "preferences").pixmap(iconSize)));
+	m_list->item(7)->setIcon(QIcon(Application::getAppIcon("plugins", "preferences").pixmap(iconSize)));
+	m_list->item(8)->setIcon(QIcon(Application::getAppIcon("download", "preferences").pixmap(iconSize)));
+	m_list->item(9)->setIcon(QIcon(Application::getAppIcon("adblock", "preferences").pixmap(iconSize)));
+	m_list->item(10)->setIcon(Application::getAppIcon("current-tabsspace", "preferences").pixmap(iconSize));
 
 }
 
@@ -92,6 +99,7 @@ void PreferencesDialog::saveSettings()
 	m_proxyConfigPage->save();
 	m_passwordPage->save();
 	m_privacyPage->save();
+	m_pluginsPage->save();
 	m_downloadPage->save();
 	m_currentTabsSpacePage->save();
 
@@ -122,8 +130,14 @@ void PreferencesDialog::showStackedPage(QListWidgetItem* item)
 		return;
 
 	int index{m_list->currentRow()};
+
 	m_caption->setText("<b>" + item->text() + "</b>");
 	m_pages->setCurrentIndex(index);
+
+	setWindowTitle(tr("Preferences - %1").arg(item->text()));
+
+	if (index == 7)
+		m_pluginsPage->load();
 }
 
 void PreferencesDialog::addPage(QWidget* page, const QString& name, const QIcon& icon)
@@ -140,7 +154,7 @@ void PreferencesDialog::setupUI()
 
 	m_list = new QListWidget(this);
 	m_list->setObjectName(QLatin1String("preferences-list"));
-	m_list->setIconSize(QSize(32, 32));
+	//m_list->setIconSize(QSize(32, 32));
 	m_list->setMaximumWidth(220);
 
 	m_caption = new QLabel(this);
@@ -174,6 +188,7 @@ void PreferencesDialog::setupUI()
 	m_proxyConfigPage = new ProxyConfigPage(m_pages);
 	m_passwordPage = new PasswordPage(m_pages);
 	m_privacyPage = new PrivacyPage(m_pages);
+	m_pluginsPage = new PluginsManager(m_pages);
 	m_appearancePage = new AppearancePage(m_pages, this);
 	m_pageAdBlock = new AdBlockPage(m_pages);
 	m_currentTabsSpacePage = new CurrentTabsSpacePage(m_tabWidget, m_pages);
@@ -185,6 +200,7 @@ void PreferencesDialog::setupUI()
 	addPage(m_proxyConfigPage, tr("Proxy"), Application::getAppIcon("proxy", "preferences"));
 	addPage(m_passwordPage, tr("Password Manager"), Application::getAppIcon("passwords", "preferences"));
 	addPage(m_privacyPage, tr("Privacy"), Application::getAppIcon("privacy", "preferences"));
+	addPage(m_pluginsPage, tr("Plugins"), Application::getAppIcon("plugins", "preferences"));
 	addPage(m_downloadPage, tr("Downloads"), Application::getAppIcon("download", "preferences"));
 	addPage(m_pageAdBlock, tr("AdBlock"), Application::getAppIcon("adblock", "preferences"));
 	addPage(m_currentTabsSpacePage, tr("Current Tabs Space"), Application::getAppIcon("current-tabsspace", "preferences"));

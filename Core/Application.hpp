@@ -26,6 +26,8 @@
 #ifndef CORE_APPLICATION_HPP
 #define CORE_APPLICATION_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QApplication>
 #include <QList>
 
@@ -34,11 +36,6 @@
 #include <QFont>
 
 #include <QWebEngineProfile>
-
-#include <ndb/initializer.hpp>
-#include <ndb/engine/sqlite/sqlite.hpp>
-
-#include "Utils/RestoreManager.hpp"
 
 #include "3rdparty/SingleApplication/singleapplication.h"
 #include "3rdparty/Piwik/piwiktracker.h"
@@ -55,6 +52,11 @@ class DownloadManager;
 class HTML5PermissionsManager;
 class NetworkManager;
 
+class SideBarInterface;
+
+struct RestoreData;
+class RestoreManager;
+
 class BrowserWindow;
 
 class MaquetteGridItem;
@@ -66,7 +68,9 @@ class MaquetteGridItem;
  * This class will also hande OS signals like new tab request, links open request, etc.
  *
  */
-class Q_DECL_EXPORT Application: public SingleApplication {
+class SIELO_SHAREDLIB Application: public SingleApplication {
+	Q_OBJECT
+
 public:
 	//! Command line actions
 	/*! All command line option that can be requested to Sielo. This can be request from OS. */
@@ -79,6 +83,8 @@ public:
 		/*!< We want to open the url in the current tab */
 		CL_OpenUrlInNewWindow,
 		/*!< We want to open the url in a new window */
+		CL_StartWithProfile,
+		/*!< We want to start with a profile */
 		CL_NewTab,
 		/*!< We want to open a new tab */
 		CL_NewWindow,
@@ -93,10 +99,9 @@ public:
 	//! Object name
 	/*! Name of object accessible for applications. It can be used when one of this object emit a signal for all applications running. */
 	enum ObjectName {
-		ON_WebView,
-		/*!< Web view object */
-		ON_TabBar,
-		/*!< Tab bar object */
+		ON_WebView, /*!< Web view object */
+		ON_TabBar, /*!< Tab bar object */
+		ON_TabWidget, /*!< Tab space object */
 		ON_BrowserWindow /*!< Browser window object */
 	};
 
@@ -142,20 +147,6 @@ public:
 
 	Q_DECLARE_FLAGS(NewTabTypeFlags, NewTabType);
 
-	//! Paths
-	/*! Path of differents Sielo's needed folders */
-	enum Path {
-		P_Data = 0,
-		/*!< Path of data */
-		P_Plugin = 1,
-		/*!< Path of plugin (will be applications) */
-		P_Themes = 2,
-		/*!< Path of themes */
-		P_Translations = 3,
-		/*!< Path of translations */
-		P_MaquetteGrid = 4 /*!< Path of maquetteGrid */
-	};
-
 	//! After launch action
 	/*! Action that should be exectued after Sielo startup */
 	enum AfterLaunch {
@@ -185,7 +176,9 @@ public:
 	void loadWebSettings();
 	void loadApplicationSettings();
 	void loadThemesSettings();
+	void loadPluginsSettings();
 	void loadTranslationSettings();
+	void updateToProfiles();
 
 	void translateApplication();
 	QString currentLanguageFile() const { return m_languageFile; }
@@ -231,8 +224,13 @@ public:
 	AfterLaunch afterCrashLaunch() const { return m_afterCrashLaunch; }
 	AfterLaunch afterLaunch() const;
 
+	void openSession(BrowserWindow* window, RestoreData& restoreData);
 	bool restoreSession(BrowserWindow* window, RestoreData restoreData);
 	void destroyRestoreManager();
+
+	void addSidebar(const QString& id, SideBarInterface* sideBarInterface);
+	void removeSidebar(SideBarInterface* sideBarInterface);
+	QHash<QString, SideBarInterface*> sidebars() const { return m_sidebars; }
 
 	PluginProxy *plugins() const { return m_plugins; }
 	AutoFill *autoFill() const { return m_autoFill; }
@@ -255,11 +253,9 @@ public:
 	bool floatingButtonFoloweMouse() const { return m_floatingButtonFoloweMouse; }
 
 	void startAfterCrash();
-	void connectDatabase();
 
-	//	QFont morpheusFont() const { return m_morpheusFont; }
-
-	//	QFont normalFont() const { return m_normalFont; }
+	QFont morpheusFont() const { return m_morpheusFont; }
+	QFont normalFont() const { return m_normalFont; }
 
 	bool copyPath(const QString& fromDir, const QString& toDir, bool coverFileIfExist = true);
 	QString readFile(const QString& filename);
@@ -277,11 +273,15 @@ public:
 	void processCommand(const QString& command, const QStringList args);
 
 	static QString currentVersion;
-	static QList<QString> paths();
 	static Application *instance();
 	static QIcon getAppIcon(const QString& name, const QString& defaultDire = "other", const QString& format = ".png");
+	static QString getFileNameFromUrl(const QUrl &url);
 	static QByteArray readAllFileByteContents(const QString& filename);
 	static QString ensureUniqueFilename(const QString& name, const QString& appendFormat = QString("(%1)"));
+	static void removeDirectory(const QString& directory);
+
+signals:
+	void activeWindowChanged(BrowserWindow* window);
 
 public slots:
 	/*!
@@ -314,6 +314,7 @@ private slots:
 
 	void messageReceived(quint32 instanceId, QByteArray messageBytes);
 	void windowDestroyed(QObject* window);
+	void onFocusChanged();
 
 	void downloadRequested(QWebEngineDownloadItem* download);
 
@@ -360,13 +361,12 @@ private:
 	QPointer<BrowserWindow> m_lastActiveWindow;
 
 	QList<PostLaunchAction> m_postLaunchActions;
-
-	ndb::initializer<ndb::sqlite> m_ndb_init;
+	QHash<QString, SideBarInterface*> m_sidebars;
 
 	PiwikTracker* m_piwikTracker{nullptr};
 
-	//QFont m_morpheusFont{};
-	//QFont m_normalFont{};
+	QFont m_morpheusFont{};
+	QFont m_normalFont{};
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Application::NewTabTypeFlags);

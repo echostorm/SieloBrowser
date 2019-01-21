@@ -28,23 +28,34 @@
 
 #include <QTimer>
 
+#include "Utils/Settings.hpp"
+#include "Utils/SideBarManager.hpp"
+
 #include "Widgets/NavigationBar.hpp"
 #include "Widgets/Tab/ComboTabBar.hpp"
+#include "Widgets/Tab/TabWidget.hpp"
 
 namespace Sn {
-
 TabStackedWidget::TabStackedWidget(QWidget* parent) :
 	QWidget(parent),
 	m_currentIndex(-1),
-	m_previousIndex(-1)
+	m_previousIndex(-1),
+	m_sideBarManager(new SideBarManager(this))
 {
 	m_layout = new QVBoxLayout(this);
 	m_layout->setSpacing(0);
 	m_layout->setContentsMargins(0, 0, 0, 0);
 
 	m_stack = new QStackedWidget(this);
+	m_stack->setObjectName("tabwidget-stack");
 
-	m_layout->addWidget(m_stack);
+	m_splitter = new QSplitter(this);
+	m_splitter->setObjectName("sidebar-splitter");
+
+	m_splitter->addWidget(m_stack);
+	m_splitter->setCollapsible(0, false);
+
+	m_layout->addWidget(m_splitter);
 
 	connect(m_stack, &QStackedWidget::widgetRemoved, this, &TabStackedWidget::tabWasRemoved);
 }
@@ -52,6 +63,34 @@ TabStackedWidget::TabStackedWidget(QWidget* parent) :
 TabStackedWidget::~TabStackedWidget()
 {
 	// Empty
+}
+
+SideBar* TabStackedWidget::addSideBar()
+{
+	if (m_sideBar)
+		return m_sideBar.data();
+
+	m_sideBar = new SideBar(m_sideBarManager, dynamic_cast<TabWidget*>(this));
+
+	m_splitter->insertWidget(0, m_sideBar.data());
+	m_splitter->setCollapsible(0, false);
+	m_splitter->setSizes({124, 2000});
+
+	return m_sideBar.data();
+}
+
+void TabStackedWidget::createSideBarsMenu(QMenu* menu)
+{
+	m_sideBarManager->createMenu(menu);
+}
+
+void TabStackedWidget::saveSideBarSettings()
+{
+	Settings settings{};
+
+	settings.beginGroup("SideBars");
+
+	settings.setValue("Active", sideBarManager()->activeSideBar());
 }
 
 void TabStackedWidget::setTabBar(ComboTabBar* tab)
@@ -126,7 +165,7 @@ int TabStackedWidget::insertTab(int index, QWidget* widget, const QString& label
 	if (m_currentIndex >= index)
 		++m_currentIndex;
 
-	QTimer::singleShot(0, this, &TabStackedWidget::setUpLayout);
+	QTimer::singleShot(10, this, &TabStackedWidget::setUpLayout);
 
 	return index;
 }
@@ -188,6 +227,11 @@ void TabStackedWidget::removeTab(int index)
 	}
 }
 
+void TabStackedWidget::moveTab(int from, int to)
+{
+	m_comboTabBar->moveTab(from, to);
+}
+
 int TabStackedWidget::currentIndex() const
 {
 	return m_comboTabBar->currentIndex();
@@ -225,6 +269,8 @@ void TabStackedWidget::setCurrentWidget(QWidget* widget)
 
 void TabStackedWidget::setUpLayout()
 {
+	int count = m_stack->count();
+
 	if (!m_comboTabBar->isVisible()) {
 		m_dirtyTabBar = true;
 		return;

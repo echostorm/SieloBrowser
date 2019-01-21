@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_PREFERENCESDIALOG_HPP
 #define SIELOBROWSER_PREFERENCESDIALOG_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QDialog>
 
 #include <QHBoxLayout>
@@ -46,13 +48,14 @@ class LocalStoragePage;
 class ProxyConfigPage;
 class PasswordPage;
 class PrivacyPage;
+class PluginsManager;
 class DownloadPage;
 class AdBlockPage;
 class CurrentTabsSpacePage;
 
 class TabWidget;
 
-class PreferencesDialog: public QDialog {
+class SIELO_SHAREDLIB PreferencesDialog: public QDialog {
 Q_OBJECT
 
 public:
@@ -88,6 +91,7 @@ private:
 	ProxyConfigPage* m_proxyConfigPage{nullptr};
 	PasswordPage* m_passwordPage{nullptr};
 	PrivacyPage* m_privacyPage{nullptr};
+	PluginsManager* m_pluginsPage{nullptr};
 	DownloadPage* m_downloadPage{nullptr};
 	AdBlockPage* m_pageAdBlock{nullptr};
 	CurrentTabsSpacePage* m_currentTabsSpacePage{nullptr};

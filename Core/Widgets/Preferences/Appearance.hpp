@@ -26,6 +26,8 @@
 #ifndef SIELO_BROWSER_APPEARANCE_HPP
 #define SIELO_BROWSER_APPEARANCE_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QWidget>
 
 #include <QVBoxLayout>
@@ -48,7 +50,7 @@ namespace Sn
 {
 class PreferencesDialog;
 
-class AppearancePage: public QWidget {
+class SIELO_SHAREDLIB AppearancePage: public QWidget {
 Q_OBJECT
 
 public:
@@ -131,6 +133,7 @@ private:
 	QCheckBox* m_useRealToolBar{nullptr};
 	QCheckBox* m_hideBookmarksHistoryActionsByDefault{nullptr};
 	QCheckBox* m_floatingButtonFoloweMouse{nullptr};
+	QCheckBox* m_showActiveTabsSpace{nullptr};
 
 	QLabel* m_tabsSpacesPaddingLabel{nullptr};
 	QSlider* m_tabsSpacesPadding{nullptr};
@@ -140,6 +143,9 @@ private:
 	QLabel* m_backgroundLabel{nullptr};
 	QLineEdit* m_backgroundLocationEdit{nullptr};
 	QPushButton* m_backgroundLocationButton{nullptr};
+#ifdef Q_OS_WIN
+	QLabel* m_oldChipsetInfoLabel{nullptr};
+#endif
 	QSpacerItem* m_spacer{nullptr};
 
 	bool m_colorsChanged{false};

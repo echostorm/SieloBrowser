@@ -32,7 +32,6 @@
 #include <QMimeData>
 #include <QAbstractItemView>
 
-#include <QSettings>
 #include <QApplication>
 #include <QClipboard>
 
@@ -65,6 +64,7 @@
 
 namespace Sn
 {
+
 QString AddressBar::urlToText(const QUrl& url)
 {
 	if (url.scheme().isEmpty())
@@ -87,14 +87,14 @@ QString AddressBar::urlToText(const QUrl& url)
 	return stringUrl;
 }
 
-AddressBar::AddressBar(BrowserWindow* window) :
-	LineEdit(window),
-	m_window(window)
+AddressBar::AddressBar(TabWidget* tabWidget) :
+	LineEdit(tabWidget),
+	m_tabWidget(tabWidget)
 {
 	setObjectName("addressbar");
 	setDragEnabled(true);
 
-	m_siteIcon = new SiteIcon(window, this);
+	m_siteIcon = new SiteIcon(m_tabWidget, this);
 
 	m_reloadStopButton = new ToolButton(this);
 	m_reloadStopButton->setAutoRaise(true);
@@ -117,7 +117,7 @@ AddressBar::AddressBar(BrowserWindow* window) :
 
 	// TODO: potential issue...
 	m_completer = new AddressBarCompleter(this);
-	m_completer->setTabWidget(window->tabWidget());
+	m_completer->setTabWidget(m_tabWidget);
 	m_completer->setAddressBar(this);
 	connect(m_completer, &AddressBarCompleter::showCompletion, this, &AddressBar::showCompletion);
 	connect(m_completer, &AddressBarCompleter::showDomainCompletion, this, &AddressBar::showDomainCompletion);
@@ -155,8 +155,20 @@ void AddressBar::setWebView(TabbedWebView* view)
 	connect(m_webView, SIGNAL(urlChanged(QUrl)), this, SLOT(showUrl(QUrl)));
 }
 
+
+void AddressBar::setTabWidget(TabWidget* tabWidget)
+{
+	m_tabWidget = tabWidget;
+	m_completer->setTabWidget(m_tabWidget);
+}
+
 void AddressBar::setText(const QString& text)
 {
+	if (text.contains("doosearch.sielo.app")) {
+		clear();
+		return;
+	}
+
 	m_oldTextLength = text.length();
 	m_currentTextLength = m_oldTextLength;
 
@@ -435,42 +447,46 @@ void AddressBar::keyPressEvent(QKeyEvent* event)
 
 		case Qt::AltModifier:
 			m_completer->closePopup();
-			m_window->tabWidget()->addView(createLoadRequest());
+			m_tabWidget->addView(createLoadRequest());
 			m_holdingAlt = false;
 			break;
 
 		default:
+			if (text().left(1) == "!") {
+				QString fullCommand = text();
+				fullCommand = fullCommand.right(fullCommand.count() - 1);
+
+				QStringList args = fullCommand.split(" ");
+				QString command = args[0];
+
+				args.removeAt(0);
+				foreach(const QString& str, args)
+				{
+					if (str == " ")
+						args.removeOne(str);
+					else if (str.isEmpty())
+						args.removeOne(str);
+				}
+
+				if (!processMainCommand(command, args))
+					Application::instance()->processCommand(command, args);
+
+				showUrl(m_webView->url());
+				return;
+			}
+
 			requestLoadUrl();
 			m_holdingAlt = false;
+			break;
 		}
+
 		/*
-				if (text().left(1) == "!") {
-					QString fullCommand = text();
-					fullCommand = fullCommand.right(fullCommand.count() - 1);
-		
-					QStringList args = fullCommand.split(" ");
-					QString command = args[0];
-		
-					args.removeAt(0);
-							foreach (const QString& str, args) {
-							QMessageBox::information(nullptr, "DEBUG", str);
-							if (str == " ")
-								args.removeOne(str);
-							else if (str.isEmpty())
-								args.removeOne(str);
-						}
-		
-					if (!processMainCommand(command, args))
-						Application::instance()->processCommand(command, args);
-		
-					showUrl(m_webView->url());
-				}
 				else if (!isPopupVisible()) {
 					switch (event->modifiers()) {
 					case Qt::ControlModifier:
 						if (!text().endsWith(QLatin1String(".com")))
 							setText(text().append(QLatin1String(".com")));
-		
+
 						requestLoadUrl();
 						m_holdingAlt = false;
 						break;
@@ -482,8 +498,8 @@ void AddressBar::keyPressEvent(QKeyEvent* event)
 						requestLoadUrl();
 						m_holdingAlt = false;
 					}
-				}
-		*/
+				}*/
+
 		break;
 	case Qt::Key_0:
 	case Qt::Key_1:
@@ -507,6 +523,13 @@ void AddressBar::keyPressEvent(QKeyEvent* event)
 	}
 
 	LineEdit::keyPressEvent(event);
+}
+
+void AddressBar::mousePressEvent(QMouseEvent* event)
+{
+	emit m_tabWidget->focusIn(m_tabWidget);
+
+	LineEdit::mousePressEvent(event);
 }
 
 LoadRequest AddressBar::createLoadRequest() const
@@ -595,21 +618,21 @@ bool AddressBar::processMainCommand(const QString& command, const QStringList& a
 		if (args.count() == 1)
 			request.setUrl(args[0]);
 		else
-			request.setUrl(webView()->webTab()->tabBar()->tabWidget()->urlOnNewTab());
+			request.setUrl(webView()->webTab()->tabWidget()->urlOnNewTab());
 
 		webView()->loadInNewTab(request, Application::NTT_CleanSelectedTabAtEnd);
 
 		succes = true;
 	}
 	else if (command == "closetab") {
-		webView()->webTab()->tabBar()->tabWidget()
-		         ->requestCloseTab(webView()->webTab()->tabBar()->tabWidget()->currentIndex());
+		webView()->webTab()->tabWidget()
+			->requestCloseTab(webView()->webTab()->tabWidget()->currentIndex());
 
 		succes = true;
 	}
 	else if (command == "reload") {
 		if (args.count() == 1)
-			webView()->webTab()->tabBar()->tabWidget()->reloadAllTabs();
+			webView()->webTab()->tabWidget()->reloadAllTabs();
 		else
 			webView()->reload();
 	}

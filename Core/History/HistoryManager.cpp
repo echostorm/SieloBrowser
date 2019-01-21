@@ -45,6 +45,8 @@ HistoryManager::HistoryManager(BrowserWindow* window, QWidget* parent) :
 	m_window(window)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowIcon(Application::getAppIcon("history"));
+	setWindowTitle(tr("History"));
 
 	setupUI();
 
@@ -58,11 +60,6 @@ HistoryManager::HistoryManager(BrowserWindow* window, QWidget* parent) :
 	connect(m_deleteAllButton, &QPushButton::clicked, this, &HistoryManager::clearHistory);
 
 	m_view->setFocus();
-}
-
-HistoryManager::~HistoryManager()
-{
-	// Empty
 }
 
 void HistoryManager::setMainWindow(BrowserWindow* window)
@@ -95,7 +92,7 @@ void HistoryManager::openUrl(const QUrl& url)
 {
 	const QUrl u{!url.isEmpty() ? url : m_view->selectedUrl()};
 
-	m_window->webView()->load(u);
+	m_window->tabWidget()->webTab()->load(u);
 }
 
 void HistoryManager::openUrlInNewTab(const QUrl& url)

@@ -26,6 +26,8 @@
 #ifndef SIELOBROWSER_MOCKUPSTABSLIST_HPP
 #define SIELOBROWSER_MOCKUPSTABSLIST_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QListWidget>
 
 #include <QDropEvent>
@@ -40,7 +42,7 @@ namespace Sn
 {
 class MaquetteGridManager;
 
-class MaquetteGridTabsList: public QListWidget {
+class SIELO_SHAREDLIB MaquetteGridTabsList: public QListWidget {
 Q_OBJECT
 
 public:
@@ -50,7 +52,9 @@ public:
 	QVBoxLayout *parentLayout() const { return m_parentLayout; }
 	void setParentLayout(QVBoxLayout* layout);
 
-	MaquetteGridItem::TabsSpace *tabsSpace();
+	TabsSpaceSplitter::SavedTabsSpace tabsSpace();
+
+	MaquetteGridManager* manager() const { return m_maquetteGridManager; }
 
 private slots:
 	void deleteItem();

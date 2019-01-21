@@ -26,13 +26,13 @@
 #ifndef SIELO_BROWSER_AUTOFILL_HPP
 #define SIELO_BROWSER_AUTOFILL_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QObject>
 
 #include <QUrl>
 
 #include "Database/SqlDatabase.hpp"
-
-constexpr auto autofill_exceptions = ndb::models::password.autofill_exceptions;
 
 namespace Sn {
 class PasswordManager;
@@ -49,7 +49,7 @@ struct PageFormData {
 	bool isValid() const { return !password.isEmpty(); }
 };
 
-class AutoFill: public QObject {
+class SIELO_SHAREDLIB AutoFill: public QObject {
 Q_OBJECT
 
 public:

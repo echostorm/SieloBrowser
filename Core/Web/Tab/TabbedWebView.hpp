@@ -28,6 +28,8 @@
 
 #define EXP_TRANSPARENT_BG
 
+#include "SharedDefines.hpp"
+
 #include <QLabel>
 #include <QMenu>
 
@@ -37,23 +39,24 @@
 
 #include "Web/WebView.hpp"
 
-namespace Sn {
+namespace Sn
+{
 class WebPage;
-class BrowserWindow;
+class TabWidget;
 class LoadRequest;
 
 class WebTab;
 
-class TabbedWebView: public WebView {
-Q_OBJECT
+class SIELO_SHAREDLIB TabbedWebView: public WebView {
+	Q_OBJECT
 
 public:
 	TabbedWebView(WebTab* tab);
 
 	void setWebPage(WebPage* page);
 
-	BrowserWindow* browserWindow() const { return m_window; }
-	void setBrowserWindow(BrowserWindow* window);
+	TabWidget* tabWidget() const { return m_tabWidget; }
+	void setTabWidget(TabWidget* tabWidget);
 
 	WebTab* webTab() const { return m_webTab; }
 
@@ -92,6 +95,8 @@ private slots:
 	void linkHovered(const QString& link);
 	void setIp(const QHostInfo& info);
 
+	void inspectElement();
+
 private:
 	void newContextMenuEvent(QContextMenuEvent* event) Q_DECL_OVERRIDE;
 	void newMousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
@@ -106,11 +111,11 @@ private:
 
 	QFrame* m_highlightedFrame{};
 
-	BrowserWindow* m_window{nullptr};
+	TabWidget* m_tabWidget{nullptr};
 	WebTab* m_webTab{nullptr};
 	QMenu* m_menu{nullptr};
 
-	QImage* m_processed_bg{ nullptr };
+	QImage* m_processed_bg{nullptr};
 
 	QString m_currentIp{};
 

@@ -1,35 +1,12 @@
+add_definitions(-DSIELO_SHAREDLIBRARY)
 cmake_minimum_required(VERSION 3.6)
-project(Core)
-
-include_directories(${CMAKE_SOURCE_DIR}/Core)
-include_directories(${CMAKE_SOURCE_DIR}/third-party/includes)
-
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    # 64bit
-    set (CMAKE_PREFIX_PATH "C:\\Qt\\5.11.1\\msvc2017_64\\")
-    set (ENV{OPENSSL_ROOT_DIR} "${CMAKE_SOURCE_DIR}\\third-party\\openssl\\windows\\x64\\")
-    set (ENV{OPENSSL_CRYPTO_LIBRARY} "${CMAKE_SOURCE_DIR}\\third-party\\openssl\\windows\\x64\\")
-elseif(WIN32)
-    set (CMAKE_PREFIX_PATH "C:\\Qt\\5.11.0\\msvc2015\\")
-    set (ENV{OPENSSL_ROOT_DIR} "${CMAKE_SOURCE_DIR}\\third-party\\openssl\\windows\\x86\\")
-    set (ENV{OPENSSL_CRYPTO_LIBRARY} "${CMAKE_SOURCE_DIR}\\third-party\\openssl\\windows\\x86\\")
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set (CMAKE_PREFIX_PATH "/Users/feldrise/Qt/5.11.1/clang_64/")
-    set (ENV{OPENSSL_ROOT_DIR} "${CMAKE_SOURCE_DIR}/third-party/openssl/macos/")
-    set (ENV{OPENSSL_CRYPTO_LIBRARY} "${CMAKE_SOURCE_DIR}/third-party/openssl/macos/")
-endif()
-
-if(GNU)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-endif()
-
-# ndb
-set(NDB_ENGINE_SQLITE ON)
-add_subdirectory(${CMAKE_SOURCE_DIR}/third-party/ndb ${CMAKE_SOURCE_DIR}/third-party/ndb/cmake-build)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+
+include_directories(${CMAKE_SOURCE_DIR}/Core)
+include_directories(${CMAKE_SOURCE_DIR}/third-party/includes)
 
 file(
         GLOB_RECURSE
@@ -68,22 +45,41 @@ file(
         Application.hpp
         BrowserWindow.hpp
         BrowserWindow.cpp
+	    SharedDefines.hpp
 )
 
-find_package(OpenSSL 1.1.0 REQUIRED)
-find_package(Qt5Widgets 5.8 REQUIRED)
-find_package(Qt5WebEngine 5.8 REQUIRED)
-find_package(Qt5WebEngineWidgets 5.8 REQUIRED)
+file(
+        GLOB_RECURSE
+        QRC_FILES
+        ${CMAKE_SOURCE_DIR}/*.qrc
+)
 
-add_library(Core ${SOURCE_FILES} ../icons.qrc/ ${QM_FILES})
+add_library(SieloCore SHARED ${SOURCE_FILES} ${QRC_FILES} ${QM_FILES})
+
+set(SIELO_LIBS ${OPENSSL_LIBRARIES} Qt5::Widgets Qt5::WebEngine Qt5::Sql Qt5::WebEngineWidgets)
+if(WIN32)
+    set(SIELO_LIBS ${SIELO_LIBS} dwmapi uxtheme)
+endif()
+
+target_link_libraries(SieloCore ${SIELO_LIBS})
+
+if (WIN32)
+    # deploy
+    get_target_property(QT5_QMAKE_EXECUTABLE Qt5::qmake IMPORTED_LOCATION)
+    get_filename_component(QT5_WINDEPLOYQT_EXECUTABLE ${QT5_QMAKE_EXECUTABLE} PATH)
+    set(QT5_WINDEPLOYQT_EXECUTABLE "${QT5_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
+
+    add_custom_command(TARGET SieloCore POST_BUILD
+        COMMAND ${QT5_WINDEPLOYQT_EXECUTABLE} --qmldir ${CMAKE_SOURCE_DIR} $<TARGET_FILE_DIR:SieloCore>/SieloCore.dll)
+		file(GLOB OPENSSL_CRYPTO_DLLS "${OPENSSL_DIR}/bin/*.dll")
+        file(COPY ${OPENSSL_CRYPTO_DLLS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+        file(COPY ${OPENSSL_CRYPTO_DLLS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+endif()
 
 foreach(_source IN ITEMS ${SOURCE_FILES})
-    get_filename_component(_source_path "${_source}" PATH)
-    file(RELATIVE_PATH _source_path_rel "${CMAKE_SOURCE_DIR}/Core" "${_source_path}")
-    string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
-    source_group("${_group_path}" FILES "${_source}")
+	get_filename_component(_source_path "${_source}" PATH)
+	file(RELATIVE_PATH _source_path_rel "${CMAKE_SOURCE_DIR}/Core" "${_source_path}")
+	string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
+	source_group("${_group_path}" FILES "${_source}")
 endforeach()
 
-set(SIELO_LIBS ${OPENSSL_LIBRARIES} Qt5::Widgets Qt5::WebEngine Qt5::WebEngineWidgets)
-target_link_libraries(Core LINK_PUBLIC ${SIELO_LIBS})
-target_link_libraries(Core PUBLIC lib_ndb)

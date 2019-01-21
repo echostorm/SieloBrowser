@@ -26,13 +26,17 @@
 #ifndef SIELO_BROWSER_EXTERNALJSOBJECT_HPP
 #define SIELO_BROWSER_EXTERNALJSOBJECT_HPP
 
+#include "SharedDefines.hpp"
+
 #include <QObject>
+
+#include <QWebChannel>
 
 namespace Sn {
 class WebPage;
 class AutoFillJsObject;
 
-class ExternalJsObject: public QObject {
+class SIELO_SHAREDLIB ExternalJsObject: public QObject {
 Q_OBJECT
 	Q_PROPERTY(QObject* autoFill
 				   READ
@@ -43,6 +47,11 @@ public:
 	explicit ExternalJsObject(WebPage* page);
 
 	WebPage* page() const;
+
+	static void setupWebChannel(QWebChannel* webChannel, WebPage* page);
+
+	static void registerExtraObject(const QString& id, QObject* object);
+	static void unregisterExtraObject(const QString& id);
 
 private:
 	QObject* autoFill() const;

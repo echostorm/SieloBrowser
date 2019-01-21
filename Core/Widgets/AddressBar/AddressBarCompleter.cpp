@@ -79,6 +79,9 @@ void AddressBarCompleter::complete(const QString& string)
 {
 	QString trimmedStr{string.trimmed()};
 
+	if (trimmedStr.startsWith("!")) 
+		return;
+
 	m_popupClosed = false;
 
 	emit cancelRefreshJob();
@@ -300,7 +303,7 @@ void AddressBarCompleter::switchToTab(TabWidget* tabWidget, int tab)
 		tabWidget->window()->raise();
 	}
 	else
-		tabWidget->weTab()->webView()->setFocus();
+		tabWidget->webTab()->webView()->setFocus();
 }
 
 void AddressBarCompleter::loadString(const QString& url)
